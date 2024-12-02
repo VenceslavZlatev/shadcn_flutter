@@ -3,10 +3,19 @@ import 'dart:math';
 
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
+typedef Predicate<T> = bool Function(T value);
+
 const kDefaultDuration = Duration(milliseconds: 150);
 
 typedef ContextedCallback = void Function(BuildContext context);
 typedef ContextedValueChanged<T> = void Function(BuildContext context, T value);
+
+typedef SearchPredicate<T> = double Function(T value, String query);
+
+enum SortDirection {
+  ascending,
+  descending,
+}
 
 BorderRadius? optionallyResolveBorderRadius(
     BuildContext context, BorderRadiusGeometry? radius) {

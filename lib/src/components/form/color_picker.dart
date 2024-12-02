@@ -1107,8 +1107,8 @@ class _ColorPickerSetState extends State<ColorPickerSet> {
                               color: HSLColor.fromAHSL(
                                 color.opacity,
                                 color.hslHue,
-                                1,
-                                0.5,
+                                color.hslSat,
+                                color.hslVal,
                               ),
                               sliderType: HSLColorSliderType.alpha,
                               reverse: true,
@@ -1126,8 +1126,8 @@ class _ColorPickerSetState extends State<ColorPickerSet> {
                               color: HSVColor.fromAHSV(
                                 color.opacity,
                                 color.hsvHue,
-                                1,
-                                1,
+                                color.hsvSat,
+                                color.hsvVal,
                               ),
                               onColorChanged: (value) {
                                 widget.onColorChanged?.call(
@@ -1544,7 +1544,7 @@ class ColorInput extends StatelessWidget {
         return [
           if (allowPickFromScreen)
             IconButton.outline(
-              icon: const Icon(BootstrapIcons.eyedropper),
+              icon: Icon(BootstrapIcons.eyedropper, size: 16 * theme.scaling),
               onPressed: () async {
                 await handler.close();
                 if (!context.mounted) return;
@@ -1835,6 +1835,7 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final localizations = ShadcnLocalizations.of(context);
+    final theme = Theme.of(context);
     return AlertDialog(
       title: widget.title,
       content: ColorInputPopup(
@@ -1855,7 +1856,7 @@ class _ColorPickerDialogState extends State<_ColorPickerDialog> {
                 pickedFromScreen: true,
               ));
             },
-            icon: const Icon(BootstrapIcons.eyedropper),
+            icon: Icon(BootstrapIcons.eyedropper, size: 16 * theme.scaling),
           ),
         SecondaryButton(
           onPressed: () {

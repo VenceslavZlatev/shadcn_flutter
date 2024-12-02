@@ -54,6 +54,12 @@ class _ResizableExample6State extends State<ResizableExample6> {
                           fill: false,
                         ),
                       ),
+                      ResizablePane.flex(
+                        child: NumberedContainer(
+                          index: 4,
+                          fill: false,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -64,7 +70,7 @@ class _ResizableExample6State extends State<ResizableExample6> {
             initialSize: 100,
             minSize: 40,
             child: NumberedContainer(
-              index: 4,
+              index: 5,
               height: 200,
               fill: false,
             ),

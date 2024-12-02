@@ -243,7 +243,7 @@ class DocsPageState extends State<DocsPage> {
         ShadcnDocsPage('Divider', 'divider'),
         ShadcnDocsPage('Resizable', 'resizable'),
         // https://nextjs-shadcn-dnd.vercel.app/ (make it headless)
-        ShadcnDocsPage('Sortable', 'sortable', ShadcnFeatureTag.workInProgress),
+        ShadcnDocsPage('Sortable', 'sortable', ShadcnFeatureTag.experimental),
         ShadcnDocsPage('Steps', 'steps'),
         ShadcnDocsPage('Stepper', 'stepper'),
         ShadcnDocsPage('Timeline', 'timeline'),
@@ -296,7 +296,7 @@ class DocsPageState extends State<DocsPage> {
         // TODO also make it zoomable like: https://zoom-chart-demo.vercel.app/
         ShadcnDocsPage('Chart', 'chart', ShadcnFeatureTag.workInProgress),
         ShadcnDocsPage('Code Snippet', 'code_snippet'),
-        ShadcnDocsPage('Table', 'table', ShadcnFeatureTag.workInProgress),
+        ShadcnDocsPage('Table', 'table', ShadcnFeatureTag.experimental),
         ShadcnDocsPage('Tracker', 'tracker'),
       ],
     ),
