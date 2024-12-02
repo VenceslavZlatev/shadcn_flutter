@@ -507,51 +507,56 @@ class ShadcnLayer extends StatelessWidget {
                 platformBrightness == Brightness.dark)
         ? appScaling.scale(darkTheme ?? theme)
         : appScaling.scale(theme);
-    return OverlayManagerLayer(
-      menuHandler: menuHandler ??
-          (mobileMode
-              ? const SheetOverlayHandler()
-              : const PopoverOverlayHandler()),
-      popoverHandler: popoverHandler ??
-          (mobileMode
-              ? const SheetOverlayHandler()
-              : const PopoverOverlayHandler()),
-      tooltipHandler: tooltipHandler ??
-          (mobileMode
-              ? const FixedTooltipOverlayHandler()
-              : const PopoverOverlayHandler()),
-      child: ShadcnAnimatedTheme(
-        duration: kDefaultDuration,
-        data: scaledTheme,
-        child: Builder(builder: (context) {
-          var theme = Theme.of(context);
-          return DataMessengerRoot(
-            child: ScrollViewInterceptor(
-              enabled: enableScrollInterception,
-              child: ShadcnSkeletonizerConfigLayer(
-                theme: theme,
-                child: DefaultTextStyle.merge(
-                  style: theme.typography.base.copyWith(
-                    color: theme.colorScheme.foreground,
-                  ),
-                  child: IconTheme.merge(
-                    data: theme.iconTheme.medium.copyWith(
+    return MultiModel(
+      data: [
+        Model(#shadcn_flutter_smooth_animation, enableThemeAnimation),
+      ],
+      child: OverlayManagerLayer(
+        menuHandler: menuHandler ??
+            (mobileMode
+                ? const SheetOverlayHandler()
+                : const PopoverOverlayHandler()),
+        popoverHandler: popoverHandler ??
+            (mobileMode
+                ? const SheetOverlayHandler()
+                : const PopoverOverlayHandler()),
+        tooltipHandler: tooltipHandler ??
+            (mobileMode
+                ? const FixedTooltipOverlayHandler()
+                : const PopoverOverlayHandler()),
+        child: ShadcnAnimatedTheme(
+          duration: kDefaultDuration,
+          data: scaledTheme,
+          child: Builder(builder: (context) {
+            var theme = Theme.of(context);
+            return DataMessengerRoot(
+              child: ScrollViewInterceptor(
+                enabled: enableScrollInterception,
+                child: ShadcnSkeletonizerConfigLayer(
+                  theme: theme,
+                  child: DefaultTextStyle.merge(
+                    style: theme.typography.base.copyWith(
                       color: theme.colorScheme.foreground,
                     ),
-                    child: RecentColorsScope(
-                      initialRecentColors: initialRecentColors,
-                      maxRecentColors: maxRecentColors,
-                      onRecentColorsChanged: onRecentColorsChanged,
-                      child: ColorPickingLayer(
-                        child: KeyboardShortcutDisplayMapper(
-                          child: ToastLayer(
-                            child: builder != null
-                                ? Builder(
-                                    builder: (BuildContext context) {
-                                      return builder!(context, child);
-                                    },
-                                  )
-                                : child ?? const SizedBox.shrink(),
+                    child: IconTheme.merge(
+                      data: theme.iconTheme.medium.copyWith(
+                        color: theme.colorScheme.foreground,
+                      ),
+                      child: RecentColorsScope(
+                        initialRecentColors: initialRecentColors,
+                        maxRecentColors: maxRecentColors,
+                        onRecentColorsChanged: onRecentColorsChanged,
+                        child: ColorPickingLayer(
+                          child: KeyboardShortcutDisplayMapper(
+                            child: ToastLayer(
+                              child: builder != null
+                                  ? Builder(
+                                      builder: (BuildContext context) {
+                                        return builder!(context, child);
+                                      },
+                                    )
+                                  : child ?? const SizedBox.shrink(),
+                            ),
                           ),
                         ),
                       ),
@@ -559,9 +564,9 @@ class ShadcnLayer extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
