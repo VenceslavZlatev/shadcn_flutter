@@ -108,7 +108,6 @@ class SelectedButton extends StatefulWidget {
     super.key,
     required this.value,
     this.onChanged,
-    this.onHover,
     required this.child,
     this.enabled,
     this.style = const ButtonStyle.ghost(),
