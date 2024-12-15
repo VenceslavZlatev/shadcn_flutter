@@ -1706,7 +1706,7 @@ Decoration _buttonGhostDecorationBar(
     );
   }
   return BoxDecoration(
-    color: themeData.colorScheme.muted,
+    color: Colors.transparent,
     borderRadius: BorderRadius.circular(themeData.radiusMd),
   );
 }
