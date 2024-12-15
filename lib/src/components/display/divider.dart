@@ -296,7 +296,6 @@ class VerticalDivider extends StatelessWidget implements PreferredSizeWidget {
     }
     return SizedBox(
       width: width ?? 1,
-      height: double.infinity,
       child: AnimatedValueBuilder(
           value: DividerProperties(
             color: color ?? theme.colorScheme.border,
