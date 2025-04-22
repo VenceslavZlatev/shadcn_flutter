@@ -1095,6 +1095,7 @@ class TableCell {
                 hoverNotifier: resizedState._hoverNotifier,
                 dragNotifier: resizedState._dragNotifier,
                 maxRow: resizedState._maxRow,
+                theme: resizedState.widget.theme,
                 maxColumn: resizedState._maxColumn),
           )
       ],
@@ -1151,7 +1152,7 @@ class TableRow {
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) {
           return states.contains(WidgetState.hovered)
-              ? theme.colorScheme.muted.withOpacity(0.5)
+              ? theme.colorScheme.muted.withValues(alpha: 0.5)
               : null;
         },
       ),
@@ -1198,7 +1199,7 @@ class TableFooter extends TableRow {
         (states) {
           return states.contains(WidgetState.hovered)
               ? theme.colorScheme.muted
-              : theme.colorScheme.muted.withOpacity(0.5);
+              : theme.colorScheme.muted.withValues(alpha: 0.5);
         },
       ),
       textStyle: WidgetStateProperty.resolveWith(
@@ -1239,7 +1240,7 @@ class TableHeader extends TableRow {
         (states) {
           return states.contains(WidgetState.hovered)
               ? theme.colorScheme.muted
-              : theme.colorScheme.muted.withOpacity(0.5);
+              : theme.colorScheme.muted.withValues(alpha: 0.5);
         },
       ),
       textStyle: WidgetStateProperty.resolveWith(
@@ -2138,13 +2139,17 @@ class RenderTableLayout extends RenderBox
     }
 
     // convert the column widths and row heights to a list, where missing values are 0
-    List<double> columnWidthsList =
-        List.filled(columnWidths.keys.reduce(max) + 1, 0);
+    List<double> columnWidthsList = List.generate(maxColumn + 1, (index) {
+      return columnWidths[index] ?? 0;
+    });
     columnWidths.forEach((key, value) {
       columnWidthsList[key] = value;
     });
     List<double> rowHeightsList =
-        List.filled(rowHeights.keys.reduce(max) + 1, 0);
+        // List.filled(rowHeights.keys.reduce(max) + 1, 0);
+        List.generate(maxRow + 1, (index) {
+      return rowHeights[index] ?? 0;
+    });
     rowHeights.forEach((key, value) {
       rowHeightsList[key] = value;
     });

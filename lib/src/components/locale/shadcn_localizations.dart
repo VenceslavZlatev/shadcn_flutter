@@ -35,6 +35,9 @@ class SizeUnitLocale {
   final String separator;
   const SizeUnitLocale(this.base, this.units, {this.separator = ','});
 
+  static const SizeUnitLocale fileBytes = _fileByteUnits;
+  static const SizeUnitLocale fileBits = _fileBitUnits;
+
   String getUnit(int value) {
     if (value <= 0) return '0 ${units[0]}';
     var log10 = _log10(value);
@@ -180,6 +183,11 @@ abstract class ShadcnLocalizations {
   String get colorPickerTabRGB;
   String get colorPickerTabHSV;
   String get colorPickerTabHSL;
+
+  String dataTableSelectedRows(int count, int total);
+  String get dataTableNext;
+  String get dataTablePrevious;
+  String get dataTableColumns;
 
   String getColorPickerMode(ColorPickerMode mode) {
     switch (mode) {
@@ -735,4 +743,18 @@ class DefaultShadcnLocalizations extends ShadcnLocalizations {
 
   @override
   String get colorLightness => 'Lum';
+
+  @override
+  String get dataTableColumns => 'Columns';
+
+  @override
+  String get dataTableNext => 'Next';
+
+  @override
+  String get dataTablePrevious => 'Previous';
+
+  @override
+  String dataTableSelectedRows(int count, int total) {
+    return '$count of $total row(s) selected.';
+  }
 }

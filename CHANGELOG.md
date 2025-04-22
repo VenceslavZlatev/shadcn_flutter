@@ -1,5 +1,26 @@
+## 0.0.25
+* Tabs, TabList, and TabPane are now based on the new TabContainer
+* Fixed InputOTP onSubmit issue
+* Added onDropFailed on Sortable
+* Bump flutter dependency version to 3.29.0
+* Added TabPane component
+* Added Expanded option on NavigationBar, NavigationRail, and Sidebar
+* Fixed missing child in FormErrorBuilder
+* Fixed Toast component state
+* Fixed Progress component assertion
+* Refactored NavigationMenu children component
+* Refactored Navigation children components
+* Internal form rework
+* Fixed carousel controller disposal
+* Added SortableDragHandle
+* Improved Sortable animation
+
 ## 0.0.24
 * Remove pixel_snap
+* Fixed flutter dependency version constraint
+* Added Sortable drop animation
+* Added SortableDragHandle component
+* Added Tab Pane component
 * Fixed flutter dependency version constraint
 
 ## 0.0.23

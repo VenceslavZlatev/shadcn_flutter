@@ -348,8 +348,6 @@ class _OTPCharacterInputState extends State<_OTPCharacterInput> {
                   opacity: _value == null ? 1 : 0,
                   child: TextField(
                     border: false,
-                    useNativeContextMenu: widget.data.useNativeContextMenu,
-                    isCollapsed: true,
                     expands: false,
                     maxLines: null,
                     textAlignVertical: TextAlignVertical.top,
@@ -415,7 +413,6 @@ class InputOTPChildData {
   final int relativeIndex;
   final int? value;
   final _InputOTPState _state;
-  final bool useNativeContextMenu;
   final GlobalKey<_OTPCharacterInputState>? _key;
 
   InputOTPChildData._(
@@ -429,7 +426,6 @@ class InputOTPChildData {
     this.previousFocusNode,
     this.nextFocusNode,
     this.value,
-    this.useNativeContextMenu = false,
   });
 
   void changeValue(int? value) {
@@ -440,11 +436,11 @@ class InputOTPChildData {
 class _InputOTPChild {
   int? value;
   final FocusNode focusNode;
-  final InputOTPChild child;
   final int groupIndex;
   final int relativeIndex;
+  final InputOTPChild child;
   int groupLength = 0;
-  final GlobalKey<_OTPCharacterInputState> key = GlobalKey();
+  final GlobalKey<_OTPCharacterInputState> key;
 
   _InputOTPChild({
     required this.focusNode,
@@ -452,7 +448,16 @@ class _InputOTPChild {
     this.value,
     required this.groupIndex,
     required this.relativeIndex,
-  });
+  }) : key = GlobalKey<_OTPCharacterInputState>();
+
+  _InputOTPChild.withNewChild(_InputOTPChild old, InputOTPChild newChild)
+      : focusNode = old.focusNode,
+        value = old.value,
+        groupIndex = old.groupIndex,
+        relativeIndex = old.relativeIndex,
+        child = newChild,
+        groupLength = old.groupLength,
+        key = old.key;
 }
 
 typedef OTPCodepointList = List<int?>;
@@ -468,7 +473,6 @@ class InputOTP extends StatefulWidget {
   final OTPCodepointList? initialValue;
   final ValueChanged<OTPCodepointList>? onChanged;
   final ValueChanged<OTPCodepointList>? onSubmitted;
-  final bool useNativeContextMenu;
 
   const InputOTP({
     super.key,
@@ -476,14 +480,14 @@ class InputOTP extends StatefulWidget {
     this.initialValue,
     this.onChanged,
     this.onSubmitted,
-    this.useNativeContextMenu = false,
   });
 
   @override
   State<InputOTP> createState() => _InputOTPState();
 }
 
-class _InputOTPState extends State<InputOTP> {
+class _InputOTPState extends State<InputOTP>
+    with FormValueSupplier<OTPCodepointList, InputOTP> {
   final List<_InputOTPChild> _children = [];
 
   OTPCodepointList get value {
@@ -491,10 +495,12 @@ class _InputOTPState extends State<InputOTP> {
   }
 
   void _changeValue(int index, int? value) {
+    _children[index].value = value;
+    var val = this.value;
     if (widget.onChanged != null) {
-      _children[index].value = value;
-      var val = this.value;
       widget.onChanged!(val);
+    }
+    if (widget.onSubmitted != null) {
       if (val.every((e) => e != null)) {
         widget.onSubmitted?.call(val);
       }
@@ -531,6 +537,7 @@ class _InputOTPState extends State<InputOTP> {
     for (int i = index - relativeIndex; i < index; i++) {
       _children[i].groupLength = relativeIndex;
     }
+    formValue = value;
   }
 
   int? getInitialValue(int index) {
@@ -550,14 +557,20 @@ class _InputOTPState extends State<InputOTP> {
       int relativeIndex = 0;
       for (final child in widget.children) {
         if (child.hasValue) {
-          int? value = getInitialValue(index);
-          _children.add(_InputOTPChild(
-            focusNode: FocusNode(),
-            child: child,
-            value: value,
-            groupIndex: groupIndex,
-            relativeIndex: relativeIndex,
-          ));
+          if (index < _children.length) {
+            _children[index] = _InputOTPChild.withNewChild(
+              _children[index],
+              child,
+            );
+          } else {
+            _children.add(_InputOTPChild(
+              focusNode: FocusNode(),
+              child: child,
+              value: getInitialValue(index),
+              groupIndex: groupIndex,
+              relativeIndex: relativeIndex,
+            ));
+          }
           index++;
           relativeIndex++;
         } else {
@@ -572,6 +585,7 @@ class _InputOTPState extends State<InputOTP> {
       for (int i = index - relativeIndex; i < index; i++) {
         _children[i].groupLength = relativeIndex;
       }
+      formValue = value;
     }
   }
 
@@ -613,7 +627,6 @@ class _InputOTPState extends State<InputOTP> {
               nextFocusNode: null,
               value: null,
               groupLength: -1,
-              useNativeContextMenu: widget.useNativeContextMenu,
             )));
       }
     }
@@ -627,5 +640,10 @@ class _InputOTPState extends State<InputOTP> {
         ),
       ),
     );
+  }
+
+  @override
+  void didReplaceFormValue(OTPCodepointList value) {
+    widget.onChanged?.call(value);
   }
 }

@@ -1012,7 +1012,7 @@ class _ComponentsPageState extends State<ComponentsPage> {
                             ),
                             child: const Text('Getting Started'),
                           ),
-                          const NavigationItem(
+                          const NavigationMenuItem(
                             content: SizedBox(),
                             child: Text('Components'),
                           ),
@@ -1023,7 +1023,7 @@ class _ComponentsPageState extends State<ComponentsPage> {
                         borderRadius: theme.borderRadiusMd,
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: NavigationContentList(
+                          child: NavigationMenuContentList(
                             children: [
                               Button(
                                 style: ButtonVariance.ghost.copyWith(
@@ -1078,26 +1078,29 @@ class _ComponentsPageState extends State<ComponentsPage> {
                 example: Card(
                   child: Column(
                     children: [
-                      Tabs(index: 0, onChanged: (value) {}, tabs: const [
-                        Text('Tab 1'),
-                        Text('Tab 2'),
-                        Text('Tab 3'),
+                      Tabs(index: 0, onChanged: (value) {}, children: const [
+                        // Text('Tab 1'),
+                        // Text('Tab 2'),
+                        // Text('Tab 3'),
+                        TabItem(child: Text('Tab 1')),
+                        TabItem(child: Text('Tab 2')),
+                        TabItem(child: Text('Tab 3')),
                       ]),
-                      Tabs(index: 1, onChanged: (value) {}, tabs: const [
-                        Text('Tab 1'),
-                        Text('Tab 2'),
-                        Text('Tab 3'),
+                      Tabs(index: 1, onChanged: (value) {}, children: const [
+                        TabItem(child: Text('Tab 1')),
+                        TabItem(child: Text('Tab 2')),
+                        TabItem(child: Text('Tab 3')),
                       ]),
-                      Tabs(index: 2, onChanged: (value) {}, tabs: const [
-                        Text('Tab 1'),
-                        Text('Tab 2'),
-                        Text('Tab 3'),
+                      Tabs(index: 2, onChanged: (value) {}, children: const [
+                        TabItem(child: Text('Tab 1')),
+                        TabItem(child: Text('Tab 2')),
+                        TabItem(child: Text('Tab 3')),
                       ]),
                     ],
                   ).gap(8),
                 ),
               ),
-              const ComponentCard(
+              ComponentCard(
                 name: 'tab_list',
                 title: 'Tab List',
                 scale: 1,
@@ -1105,11 +1108,12 @@ class _ComponentsPageState extends State<ComponentsPage> {
                 verticalOffset: 60,
                 example: TabList(
                   index: 0,
-                  children: [
-                    TabButton(child: Text('Preview')),
-                    TabButton(child: Text('Code')),
-                    TabButton(child: Text('Design')),
-                    TabButton(child: Text('Settings')),
+                  onChanged: (value) {},
+                  children: const [
+                    TabItem(child: Text('Preview')),
+                    TabItem(child: Text('Code')),
+                    TabItem(child: Text('Design')),
+                    TabItem(child: Text('Settings')),
                   ],
                 ),
               ),

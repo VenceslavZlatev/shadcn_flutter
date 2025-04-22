@@ -1615,7 +1615,9 @@ Decoration _buttonOutlineDecoration(
   var themeData = Theme.of(context);
   if (states.contains(WidgetState.disabled)) {
     return BoxDecoration(
-      color: themeData.colorScheme.muted.withOpacity(0),
+      color: themeData.colorScheme.muted.withValues(
+        alpha: 0,
+      ),
       border: Border.all(
         color: themeData.colorScheme.muted,
         width: 1,
@@ -1634,7 +1636,7 @@ Decoration _buttonOutlineDecoration(
     );
   }
   return BoxDecoration(
-    color: themeData.colorScheme.muted.withOpacity(0),
+    color: themeData.colorScheme.muted.withValues(alpha: 0),
     border: Border.all(
       color: themeData.colorScheme.muted,
       width: 1,
@@ -1668,7 +1670,7 @@ Decoration _buttonGhostDecoration(
   var themeData = Theme.of(context);
   if (states.contains(WidgetState.disabled)) {
     return BoxDecoration(
-      color: themeData.colorScheme.muted.withOpacity(0),
+      color: themeData.colorScheme.muted.withValues(alpha: 0),
       borderRadius: BorderRadius.circular(themeData.radiusMd),
     );
   }
@@ -1679,7 +1681,7 @@ Decoration _buttonGhostDecoration(
     );
   }
   return BoxDecoration(
-    color: themeData.colorScheme.muted.withOpacity(0),
+    color: themeData.colorScheme.muted.withValues(alpha: 0),
     borderRadius: BorderRadius.circular(themeData.radiusMd),
   );
 }

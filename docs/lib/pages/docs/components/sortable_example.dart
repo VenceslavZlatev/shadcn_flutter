@@ -3,6 +3,8 @@ import 'package:docs/pages/docs/components/sortable/sortable_example_1.dart';
 import 'package:docs/pages/docs/components/sortable/sortable_example_2.dart';
 import 'package:docs/pages/docs/components/sortable/sortable_example_3.dart';
 import 'package:docs/pages/docs/components/sortable/sortable_example_4.dart';
+import 'package:docs/pages/docs/components/sortable/sortable_example_5.dart';
+import 'package:docs/pages/docs/components/sortable/sortable_example_6.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../widget_usage_example.dart';
@@ -37,6 +39,16 @@ class SortableExample extends StatelessWidget {
           title: 'ListView Example',
           path: 'lib/pages/docs/components/sortable/sortable_example_4.dart',
           child: SortableExample4(),
+        ),
+        WidgetUsageExample(
+          title: 'Drag Handle Example',
+          path: 'lib/pages/docs/components/sortable/sortable_example_5.dart',
+          child: SortableExample5(),
+        ),
+        WidgetUsageExample(
+          title: 'Remove Item Example',
+          path: 'lib/pages/docs/components/sortable/sortable_example_6.dart',
+          child: SortableExample6(),
         ),
       ],
     );
