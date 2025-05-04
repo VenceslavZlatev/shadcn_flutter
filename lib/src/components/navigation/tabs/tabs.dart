@@ -5,6 +5,9 @@ class Tabs extends StatelessWidget {
   final ValueChanged<int> onChanged;
   final List<TabChild> children;
   final EdgeInsetsGeometry? padding;
+  final bool enableWrap;
+  final double spacing;
+  final double runSpacing;
 
   const Tabs({
     super.key,
@@ -12,10 +15,12 @@ class Tabs extends StatelessWidget {
     required this.onChanged,
     required this.children,
     this.padding,
+    this.enableWrap = false,
+    this.spacing = 4.0,
+    this.runSpacing = 8.0,
   });
 
-  Widget _childBuilder(
-      BuildContext context, TabContainerData data, Widget child) {
+  Widget _childBuilder(BuildContext context, TabContainerData data, Widget child) {
     final theme = Theme.of(context);
     final scaling = theme.scaling;
     final i = data.index;
@@ -28,8 +33,7 @@ class Tabs extends StatelessWidget {
         hitTestBehavior: HitTestBehavior.translucent,
         cursor: SystemMouseCursors.click,
         child: AnimatedContainer(
-          duration: const Duration(
-              milliseconds: 50), // slightly faster than kDefaultDuration
+          duration: const Duration(milliseconds: 50), // slightly faster than kDefaultDuration
           alignment: Alignment.center,
           padding: padding ??
               const EdgeInsets.symmetric(
@@ -43,9 +47,7 @@ class Tabs extends StatelessWidget {
               theme.radiusMd,
             ),
           ),
-          child: (i == index ? child.foreground() : child.muted())
-              .small()
-              .medium(),
+          child: (i == index ? child.foreground() : child.muted()).small().medium(),
         ),
       ),
     );
@@ -65,13 +67,20 @@ class Tabs extends StatelessWidget {
             borderRadius: BorderRadius.circular(theme.radiusLg),
           ),
           padding: const EdgeInsets.all(4) * scaling,
-          child: IntrinsicHeight(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
-            ).muted(),
-          ),
+          child: enableWrap
+              ? Wrap(
+                  spacing: spacing * scaling,
+                  runSpacing: runSpacing * scaling,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: children,
+                ).muted()
+              : IntrinsicHeight(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: children,
+                  ).muted(),
+                ),
         );
       },
       childBuilder: _childBuilder,

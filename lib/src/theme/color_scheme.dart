@@ -110,10 +110,8 @@ class ColorShades implements Color, ColorSwatch {
     for (final key in shadeValues) {
       double delta = (key - base) / _step;
       double hueDelta = delta * (hueShift / 10);
-      double saturationDelta =
-          delta > 0 ? delta * saturationStepUp : delta * saturationStepDown;
-      double lightnessDelta =
-          delta > 0 ? delta * lightnessStepUp : delta * lightnessStepDown;
+      double saturationDelta = delta > 0 ? delta * saturationStepUp : delta * saturationStepDown;
+      double lightnessDelta = delta > 0 ? delta * lightnessStepUp : delta * lightnessStepDown;
       final h = (accent.hue + hueDelta) % 360;
       final s = (accent.saturation * 100 - saturationDelta).clamp(0, 100) / 100;
       final l = (accent.lightness * 100 - lightnessDelta).clamp(0, 100) / 100;
@@ -137,10 +135,8 @@ class ColorShades implements Color, ColorSwatch {
         'ColorShades.fromAccent: Invalid base value');
     double delta = (targetBase - base) / _step;
     double hueDelta = delta * (hueShift / 10);
-    double saturationDelta =
-        delta > 0 ? delta * saturationStepUp : delta * saturationStepDown;
-    double lightnessDelta =
-        delta > 0 ? delta * lightnessStepUp : delta * lightnessStepDown;
+    double saturationDelta = delta > 0 ? delta * saturationStepUp : delta * saturationStepDown;
+    double lightnessDelta = delta > 0 ? delta * lightnessStepUp : delta * lightnessStepDown;
     final h = (hsv.hue + hueDelta) % 360;
     final s = (hsv.saturation * 100 - saturationDelta).clamp(0, 100) / 100;
     final l = (hsv.lightness * 100 - lightnessDelta).clamp(0, 100) / 100;
@@ -282,12 +278,7 @@ class ColorShades implements Color, ColorSwatch {
   double get r => _primary.r;
 
   @override
-  Color withValues(
-      {double? alpha,
-      double? red,
-      double? green,
-      double? blue,
-      ColorSpace? colorSpace}) {
+  Color withValues({double? alpha, double? red, double? green, double? blue, ColorSpace? colorSpace}) {
     Map<int, Color> colors = {};
     for (final key in shadeValues) {
       colors[key] = _colors[key]!.withValues(
@@ -422,10 +413,8 @@ class ColorScheme implements ChartColorScheme {
         chart3 = map._col('chart3'),
         chart4 = map._col('chart4'),
         chart5 = map._col('chart5'),
-        brightness = Brightness.values
-                .where((element) => element.name == map['brightness'])
-                .firstOrNull ??
-            Brightness.light;
+        brightness =
+            Brightness.values.where((element) => element.name == map['brightness']).firstOrNull ?? Brightness.light;
 
   Map<String, String> toMap() {
     return {
@@ -556,8 +545,7 @@ class ColorScheme implements ChartColorScheme {
       accent: accent ?? this.accent,
       accentForeground: accentForeground ?? this.accentForeground,
       destructive: destructive ?? this.destructive,
-      destructiveForeground:
-          destructiveForeground ?? this.destructiveForeground,
+      destructiveForeground: destructiveForeground ?? this.destructiveForeground,
       border: border ?? this.border,
       input: input ?? this.input,
       ring: ring ?? this.ring,
@@ -580,21 +568,17 @@ class ColorScheme implements ChartColorScheme {
       card: Color.lerp(a.card, b.card, t)!,
       cardForeground: Color.lerp(a.cardForeground, b.cardForeground, t)!,
       popover: Color.lerp(a.popover, b.popover, t)!,
-      popoverForeground:
-          Color.lerp(a.popoverForeground, b.popoverForeground, t)!,
+      popoverForeground: Color.lerp(a.popoverForeground, b.popoverForeground, t)!,
       primary: Color.lerp(a.primary, b.primary, t)!,
-      primaryForeground:
-          Color.lerp(a.primaryForeground, b.primaryForeground, t)!,
+      primaryForeground: Color.lerp(a.primaryForeground, b.primaryForeground, t)!,
       secondary: Color.lerp(a.secondary, b.secondary, t)!,
-      secondaryForeground:
-          Color.lerp(a.secondaryForeground, b.secondaryForeground, t)!,
+      secondaryForeground: Color.lerp(a.secondaryForeground, b.secondaryForeground, t)!,
       muted: Color.lerp(a.muted, b.muted, t)!,
       mutedForeground: Color.lerp(a.mutedForeground, b.mutedForeground, t)!,
       accent: Color.lerp(a.accent, b.accent, t)!,
       accentForeground: Color.lerp(a.accentForeground, b.accentForeground, t)!,
       destructive: Color.lerp(a.destructive, b.destructive, t)!,
-      destructiveForeground:
-          Color.lerp(a.destructiveForeground, b.destructiveForeground, t)!,
+      destructiveForeground: Color.lerp(a.destructiveForeground, b.destructiveForeground, t)!,
       border: Color.lerp(a.border, b.border, t)!,
       input: Color.lerp(a.input, b.input, t)!,
       ring: Color.lerp(a.ring, b.ring, t)!,
