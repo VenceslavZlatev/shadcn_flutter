@@ -2,13 +2,13 @@
 ![Pub Likes](https://img.shields.io/pub/likes/shadcn_flutter)
 ![Pub Points](https://img.shields.io/pub/points/shadcn_flutter)
 ![Pub Version](https://img.shields.io/pub/v/shadcn_flutter)
+![GitHub Sponsors](https://img.shields.io/github/sponsors/sunarya-thito)
 ![GitHub Repo stars](https://img.shields.io/github/stars/sunarya-thito/shadcn_flutter)
 
 A set of widgets and utilities for building applications in flutter.
-Optimized for web applications.
 This is a port of the shadcn UI package to flutter.
 
-[Documentation](https://sunarya-thito.github.io/shadcn_flutter/) - [Pub.dev](https://pub.dev/packages/shadcn_flutter) - [Discord](https://discord.gg/ZzfBPQG4sV)
+[Documentation](https://sunarya-thito.github.io/shadcn_flutter/) - [pub.dev](https://pub.dev/packages/shadcn_flutter) - [Discord](https://discord.gg/ZzfBPQG4sV)
 
 ## Widgets
 
@@ -127,58 +127,22 @@ void main() {
   );
 }
 ```
-#### 5. Add the fonts
-Add the following fonts to your `pubspec.yaml` file.
-```yaml
-  fonts:
-    - family: RadixIcons
-      fonts:
-        - asset: "packages/shadcn_flutter/icons/RadixIcons.otf"
-    - family: BootstrapIcons
-      fonts:
-        - asset: "packages/shadcn_flutter/icons/BootstrapIcons.otf"
-    - family: "GeistSans"
-      fonts:
-        - asset: "packages/shadcn_flutter/fonts/Geist-Black.otf"
-          weight: 800
-        - asset: "packages/shadcn_flutter/fonts/Geist-Bold.otf"
-          weight: 700
-        - asset: "packages/shadcn_flutter/fonts/Geist-Light.otf"
-          weight: 300
-        - asset: "packages/shadcn_flutter/fonts/Geist-Medium.otf"
-          weight: 500
-        - asset: "packages/shadcn_flutter/fonts/Geist-SemiBold.otf"
-          weight: 600
-        - asset: "packages/shadcn_flutter/fonts/Geist-Thin.otf"
-          weight: 100
-        - asset: "packages/shadcn_flutter/fonts/Geist-UltraBlack.otf"
-          weight: 900
-        - asset: "packages/shadcn_flutter/fonts/Geist-UltraLight.otf"
-          weight: 200
-        - asset: "packages/shadcn_flutter/fonts/Geist-Regular.otf"
-          weight: 400
-    - family: "GeistMono"
-      fonts:
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Black.otf"
-          weight: 800
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Bold.otf"
-          weight: 700
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Light.otf"
-          weight: 300
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Medium.otf"
-          weight: 500
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Regular.otf"
-          weight: 400
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-SemiBold.otf"
-          weight: 600
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-Thin.otf"
-          weight: 100
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-UltraBlack.otf"
-          weight: 900
-        - asset: "packages/shadcn_flutter/fonts/GeistMono-UltraLight.otf"
-          weight: 200
-```
-#### 6. Run the app
+
+#### 5. Run the app
 ```bash
 flutter run
 ```
+
+## Development Status
+- Android/iOS: Experimental
+- Windows/Linux/MacOS: Stable
+
+## Contributing
+The project is funded by the community. If you find this project helpful, consider supporting its development by:
+
+- Starring the [GitHub repository](https://github.com/sunarya-thito/shadcn_flutter).
+- Contributing code, documentation, or bug reports.
+- Sponsoring the project via [GitHub Sponsors](https://github.com/sponsors/sunarya-thito).
+- Sharing the project with others who might find it useful.
+
+Your support helps ensure the continued development and maintenance of this project. Thank you!

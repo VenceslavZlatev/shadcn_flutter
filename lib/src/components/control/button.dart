@@ -2,17 +2,71 @@ import 'dart:math';
 
 import '../../../shadcn_flutter.dart';
 
+class ToggleController extends ValueNotifier<bool>
+    with ComponentController<bool> {
+  ToggleController([super.value = false]);
+
+  void toggle() {
+    value = !value;
+  }
+}
+
+class ControlledToggle extends StatelessWidget with ControlledComponent<bool> {
+  @override
+  final bool? initialValue;
+  @override
+  final ValueChanged<bool>? onChanged;
+  @override
+  final bool enabled;
+  @override
+  final ToggleController? controller;
+
+  final Widget child;
+  final ButtonStyle style;
+
+  const ControlledToggle({
+    super.key,
+    this.controller,
+    this.initialValue,
+    this.onChanged,
+    this.enabled = true,
+    required this.child,
+    this.style = const ButtonStyle.ghost(),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ControlledComponentAdapter(
+      controller: controller,
+      initialValue: initialValue,
+      onChanged: onChanged,
+      enabled: enabled,
+      builder: (context, data) {
+        return Toggle(
+          value: data.value,
+          onChanged: data.onChanged,
+          enabled: data.enabled,
+          style: style,
+          child: child,
+        );
+      },
+    );
+  }
+}
+
 class Toggle extends StatefulWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
   final Widget child;
   final ButtonStyle style;
+  final bool? enabled;
 
   const Toggle({
     super.key,
     required this.value,
     this.onChanged,
     required this.child,
+    this.enabled,
     this.style = const ButtonStyle.ghost(),
   });
 
@@ -21,13 +75,14 @@ class Toggle extends StatefulWidget {
 }
 
 // toggle button is just ghost button
-class ToggleState extends State<Toggle> {
+class ToggleState extends State<Toggle> with FormValueSupplier<bool, Toggle> {
   final WidgetStatesController statesController = WidgetStatesController();
 
   @override
   void initState() {
     super.initState();
     statesController.update(WidgetState.selected, widget.value);
+    formValue = widget.value;
   }
 
   @override
@@ -35,6 +90,14 @@ class ToggleState extends State<Toggle> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
       statesController.update(WidgetState.selected, widget.value);
+      formValue = widget.value;
+    }
+  }
+
+  @override
+  void didReplaceFormValue(bool value) {
+    if (widget.onChanged != null) {
+      widget.onChanged!(value);
     }
   }
 
@@ -42,6 +105,7 @@ class ToggleState extends State<Toggle> {
   Widget build(BuildContext context) {
     return Button(
         statesController: statesController,
+        enabled: widget.enabled,
         style: widget.value
             ? ButtonStyle.secondary(
                 density: widget.style.density,
@@ -63,11 +127,11 @@ class ToggleState extends State<Toggle> {
                       : null,
                 );
               }),
-        onPressed: () {
-          if (widget.onChanged != null) {
-            widget.onChanged!(!widget.value);
-          }
-        },
+        onPressed: widget.onChanged != null
+            ? () {
+                widget.onChanged!(!widget.value);
+              }
+            : null,
         child: widget.child);
   }
 }
@@ -697,6 +761,21 @@ class ButtonState<T extends Button> extends State<T> {
             })
           : null,
       onPressed: widget.onPressed,
+      onTapDown: widget.onTapDown,
+      onTapUp: widget.onTapUp,
+      onTapCancel: widget.onTapCancel,
+      onSecondaryTapDown: widget.onSecondaryTapDown,
+      onSecondaryTapUp: widget.onSecondaryTapUp,
+      onSecondaryTapCancel: widget.onSecondaryTapCancel,
+      onTertiaryTapDown: widget.onTertiaryTapDown,
+      onTertiaryTapUp: widget.onTertiaryTapUp,
+      onTertiaryTapCancel: widget.onTertiaryTapCancel,
+      onLongPressStart: widget.onLongPressStart,
+      onLongPressUp: widget.onLongPressUp,
+      onLongPressMoveUpdate: widget.onLongPressMoveUpdate,
+      onLongPressEnd: widget.onLongPressEnd,
+      onSecondaryLongPress: widget.onSecondaryLongPress,
+      onTertiaryLongPress: widget.onTertiaryLongPress,
       child: widget.leading == null && widget.trailing == null
           ? Align(
               heightFactor: 1,
@@ -806,7 +885,7 @@ abstract class AbstractButtonStyle {
 }
 
 class ButtonStyle implements AbstractButtonStyle {
-  final ButtonVariance variance;
+  final AbstractButtonStyle variance;
   final ButtonSize size;
   final ButtonDensity density;
   final ButtonShape shape;
@@ -1031,6 +1110,110 @@ class ButtonStyle implements AbstractButtonStyle {
   }
 }
 
+abstract class ButtonTheme {
+  final ButtonStatePropertyDelegate<Decoration>? decoration;
+  final ButtonStatePropertyDelegate<MouseCursor>? mouseCursor;
+  final ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding;
+  final ButtonStatePropertyDelegate<TextStyle>? textStyle;
+  final ButtonStatePropertyDelegate<IconThemeData>? iconTheme;
+  final ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin;
+
+  const ButtonTheme(
+      {this.decoration,
+      this.mouseCursor,
+      this.padding,
+      this.textStyle,
+      this.iconTheme,
+      this.margin});
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ButtonTheme &&
+        other.decoration == decoration &&
+        other.mouseCursor == mouseCursor &&
+        other.padding == padding &&
+        other.textStyle == textStyle &&
+        other.iconTheme == iconTheme &&
+        other.margin == margin;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      decoration, mouseCursor, padding, textStyle, iconTheme, margin);
+
+  @override
+  String toString() =>
+      '$runtimeType{decoration: $decoration, mouseCursor: $mouseCursor, padding: $padding, textStyle: $textStyle, iconTheme: $iconTheme, margin: $margin}';
+}
+
+class ComponentThemeButtonStyle<T extends ButtonTheme>
+    implements AbstractButtonStyle {
+  final AbstractButtonStyle fallback;
+
+  const ComponentThemeButtonStyle({required this.fallback});
+
+  T? find(BuildContext context) {
+    return ComponentTheme.maybeOf<T>(context);
+  }
+
+  @override
+  ButtonStateProperty<Decoration> get decoration => _resolveDecoration;
+
+  Decoration _resolveDecoration(BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.decoration(context, states);
+    return find(context)?.decoration?.call(context, states, resolved) ??
+        resolved;
+  }
+
+  @override
+  ButtonStateProperty<IconThemeData> get iconTheme => _resolveIconTheme;
+
+  IconThemeData _resolveIconTheme(
+      BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.iconTheme(context, states);
+    return find(context)?.iconTheme?.call(context, states, resolved) ??
+        resolved;
+  }
+
+  @override
+  ButtonStateProperty<EdgeInsetsGeometry> get margin => _resolveMargin;
+
+  EdgeInsetsGeometry _resolveMargin(
+      BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.margin(context, states);
+    return find(context)?.margin?.call(context, states, resolved) ?? resolved;
+  }
+
+  @override
+  ButtonStateProperty<MouseCursor> get mouseCursor => _resolveMouseCursor;
+
+  MouseCursor _resolveMouseCursor(
+      BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.mouseCursor(context, states);
+    return find(context)?.mouseCursor?.call(context, states, resolved) ??
+        resolved;
+  }
+
+  @override
+  ButtonStateProperty<EdgeInsetsGeometry> get padding => _resolvePadding;
+
+  EdgeInsetsGeometry _resolvePadding(
+      BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.padding(context, states);
+    return find(context)?.padding?.call(context, states, resolved) ?? resolved;
+  }
+
+  @override
+  ButtonStateProperty<TextStyle> get textStyle => _resolveTextStyle;
+
+  TextStyle _resolveTextStyle(BuildContext context, Set<WidgetState> states) {
+    var resolved = fallback.textStyle(context, states);
+    return find(context)?.textStyle?.call(context, states, resolved) ??
+        resolved;
+  }
+}
+
 extension ShapeDecorationExtension on ShapeDecoration {
   ShapeDecoration copyWith({
     ShapeBorder? shape,
@@ -1049,107 +1232,543 @@ extension ShapeDecorationExtension on ShapeDecoration {
   }
 }
 
+extension DecorationExtension on Decoration {
+  BoxDecoration copyWithIfBoxDecoration({
+    Color? color,
+    DecorationImage? image,
+    BoxBorder? border,
+    BorderRadiusGeometry? borderRadius,
+    List<BoxShadow>? boxShadow,
+    Gradient? gradient,
+    BoxShape? shape,
+    BlendMode? backgroundBlendMode,
+  }) {
+    if (this is BoxDecoration) {
+      var boxDecoration = this as BoxDecoration;
+      return BoxDecoration(
+        color: color ?? boxDecoration.color,
+        image: image ?? boxDecoration.image,
+        border: border ?? boxDecoration.border,
+        borderRadius: borderRadius ?? boxDecoration.borderRadius,
+        boxShadow: boxShadow ?? boxDecoration.boxShadow,
+        gradient: gradient ?? boxDecoration.gradient,
+        shape: shape ?? boxDecoration.shape,
+        backgroundBlendMode:
+            backgroundBlendMode ?? boxDecoration.backgroundBlendMode,
+      );
+    }
+    return BoxDecoration(
+      color: color,
+      image: image,
+      border: border,
+      borderRadius: borderRadius,
+      boxShadow: boxShadow,
+      gradient: gradient,
+      shape: shape ?? BoxShape.rectangle,
+      backgroundBlendMode: backgroundBlendMode,
+    );
+  }
+
+  ShapeDecoration copyWithIfShapeDecoration({
+    ShapeBorder? shape,
+    Color? color,
+    Gradient? gradient,
+    List<BoxShadow>? shadows,
+    DecorationImage? image,
+  }) {
+    if (this is ShapeDecoration) {
+      var shapeDecoration = this as ShapeDecoration;
+      return ShapeDecoration(
+        color: color ?? shapeDecoration.color,
+        image: image ?? shapeDecoration.image,
+        shape: shape ?? shapeDecoration.shape,
+        gradient: gradient ?? shapeDecoration.gradient,
+        shadows: shadows ?? shapeDecoration.shadows,
+      );
+    }
+    return ShapeDecoration(
+      color: color,
+      image: image,
+      shape: shape ?? const RoundedRectangleBorder(),
+      gradient: gradient,
+      shadows: shadows,
+    );
+  }
+}
+
+class PrimaryButtonTheme extends ButtonTheme {
+  const PrimaryButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  PrimaryButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return PrimaryButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class SecondaryButtonTheme extends ButtonTheme {
+  const SecondaryButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  SecondaryButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return SecondaryButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class OutlineButtonTheme extends ButtonTheme {
+  const OutlineButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  OutlineButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return OutlineButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class GhostButtonTheme extends ButtonTheme {
+  const GhostButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  GhostButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return GhostButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class LinkButtonTheme extends ButtonTheme {
+  const LinkButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  LinkButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return LinkButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class TextButtonTheme extends ButtonTheme {
+  const TextButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  TextButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return TextButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class DestructiveButtonTheme extends ButtonTheme {
+  const DestructiveButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  DestructiveButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return DestructiveButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class FixedButtonTheme extends ButtonTheme {
+  const FixedButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  FixedButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return FixedButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class MenuButtonTheme extends ButtonTheme {
+  const MenuButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  MenuButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return MenuButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class MenubarButtonTheme extends ButtonTheme {
+  const MenubarButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  MenubarButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return MenubarButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class MutedButtonTheme extends ButtonTheme {
+  const MutedButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  MutedButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return MutedButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
+class CardButtonTheme extends ButtonTheme {
+  const CardButtonTheme(
+      {super.decoration,
+      super.mouseCursor,
+      super.padding,
+      super.textStyle,
+      super.iconTheme,
+      super.margin});
+
+  CardButtonTheme copyWith({
+    ButtonStatePropertyDelegate<Decoration>? decoration,
+    ButtonStatePropertyDelegate<MouseCursor>? mouseCursor,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? padding,
+    ButtonStatePropertyDelegate<TextStyle>? textStyle,
+    ButtonStatePropertyDelegate<IconThemeData>? iconTheme,
+    ButtonStatePropertyDelegate<EdgeInsetsGeometry>? margin,
+  }) {
+    return CardButtonTheme(
+      decoration: decoration ?? this.decoration,
+      mouseCursor: mouseCursor ?? this.mouseCursor,
+      padding: padding ?? this.padding,
+      textStyle: textStyle ?? this.textStyle,
+      iconTheme: iconTheme ?? this.iconTheme,
+      margin: margin ?? this.margin,
+    );
+  }
+}
+
 class ButtonVariance implements AbstractButtonStyle {
-  static const ButtonVariance primary = ButtonVariance(
-    decoration: _buttonPrimaryDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonPrimaryTextStyle,
-    iconTheme: _buttonPrimaryIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle primary =
+      ComponentThemeButtonStyle<PrimaryButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonPrimaryDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonPrimaryTextStyle,
+      iconTheme: _buttonPrimaryIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance secondary = ButtonVariance(
-    decoration: _buttonSecondaryDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonSecondaryTextStyle,
-    iconTheme: _buttonSecondaryIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle secondary =
+      ComponentThemeButtonStyle<SecondaryButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonSecondaryDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonSecondaryTextStyle,
+      iconTheme: _buttonSecondaryIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance outline = ButtonVariance(
-    decoration: _buttonOutlineDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonOutlineTextStyle,
-    iconTheme: _buttonOutlineIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle outline =
+      ComponentThemeButtonStyle<OutlineButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonOutlineDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonOutlineTextStyle,
+      iconTheme: _buttonOutlineIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance ghost = ButtonVariance(
-    decoration: _buttonGhostDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonGhostTextStyle,
-    iconTheme: _buttonGhostIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle ghost =
+      ComponentThemeButtonStyle<GhostButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonGhostDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonGhostTextStyle,
+      iconTheme: _buttonGhostIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance link = ButtonVariance(
-    decoration: _buttonLinkDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonLinkTextStyle,
-    iconTheme: _buttonLinkIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle link =
+      ComponentThemeButtonStyle<LinkButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonLinkDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonLinkTextStyle,
+      iconTheme: _buttonLinkIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance text = ButtonVariance(
-    decoration: _buttonTextDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonTextTextStyle,
-    iconTheme: _buttonTextIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle text =
+      ComponentThemeButtonStyle<TextButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonTextDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonTextTextStyle,
+      iconTheme: _buttonTextIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
-  static const ButtonVariance destructive = ButtonVariance(
-    decoration: _buttonDestructiveDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonDestructiveTextStyle,
-    iconTheme: _buttonDestructiveIconTheme,
-    margin: _buttonZeroMargin,
-  );
-
-  static const ButtonVariance fixed = ButtonVariance(
-    decoration: _buttonTextDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonStaticTextStyle,
-    iconTheme: _buttonStaticIconTheme,
-    margin: _buttonZeroMargin,
-  );
-
-  static const ButtonVariance menu = ButtonVariance(
-    decoration: _buttonMenuDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonMenuPadding,
-    textStyle: _buttonMenuTextStyle,
-    iconTheme: _buttonMenuIconTheme,
-    margin: _buttonZeroMargin,
-  );
-
-  static const ButtonVariance menubar = ButtonVariance(
-    decoration: _buttonMenuDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonMenubarPadding,
-    textStyle: _buttonMenuTextStyle,
-    iconTheme: _buttonMenuIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle destructive =
+      ComponentThemeButtonStyle<DestructiveButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonDestructiveDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonDestructiveTextStyle,
+      iconTheme: _buttonDestructiveIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
 
-  static const ButtonVariance muted = ButtonVariance(
-    decoration: _buttonTextDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonPadding,
-    textStyle: _buttonMutedTextStyle,
-    iconTheme: _buttonMutedIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle fixed =
+      ComponentThemeButtonStyle<FixedButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonTextDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonStaticTextStyle,
+      iconTheme: _buttonStaticIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
 
-  static const ButtonVariance card = ButtonVariance(
-    decoration: _buttonCardDecoration,
-    mouseCursor: _buttonMouseCursor,
-    padding: _buttonCardPadding,
-    textStyle: _buttonCardTextStyle,
-    iconTheme: _buttonCardIconTheme,
-    margin: _buttonZeroMargin,
+  static const AbstractButtonStyle menu =
+      ComponentThemeButtonStyle<MenuButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonMenuDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonMenuPadding,
+      textStyle: _buttonMenuTextStyle,
+      iconTheme: _buttonMenuIconTheme,
+      margin: _buttonZeroMargin,
+    ),
+  );
+
+  static const AbstractButtonStyle menubar =
+      ComponentThemeButtonStyle<MenubarButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonMenuDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonMenubarPadding,
+      textStyle: _buttonMenuTextStyle,
+      iconTheme: _buttonMenuIconTheme,
+      margin: _buttonZeroMargin,
+    ),
+  );
+
+  static const AbstractButtonStyle muted =
+      ComponentThemeButtonStyle<MutedButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonTextDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonPadding,
+      textStyle: _buttonMutedTextStyle,
+      iconTheme: _buttonMutedIconTheme,
+      margin: _buttonZeroMargin,
+    ),
+  );
+
+  static const AbstractButtonStyle card =
+      ComponentThemeButtonStyle<CardButtonTheme>(
+    fallback: ButtonVariance(
+      decoration: _buttonCardDecoration,
+      mouseCursor: _buttonMouseCursor,
+      padding: _buttonCardPadding,
+      textStyle: _buttonCardTextStyle,
+      iconTheme: _buttonCardIconTheme,
+      margin: _buttonZeroMargin,
+    ),
   );
 
   @override
@@ -1241,18 +1860,6 @@ extension ButtonStyleExtension on AbstractButtonStyle {
         margin == null) {
       return this;
     }
-    if (this is _CopyWithButtonStyle) {
-      var copy = this as _CopyWithButtonStyle;
-      return _CopyWithButtonStyle(
-        copy._delegate,
-        decoration ?? copy._decoration,
-        mouseCursor ?? copy._mouseCursor,
-        padding ?? copy._padding,
-        textStyle ?? copy._textStyle,
-        iconTheme ?? copy._iconTheme,
-        margin ?? copy._margin,
-      );
-    }
     return _CopyWithButtonStyle(
       this,
       decoration,
@@ -1261,6 +1868,124 @@ extension ButtonStyleExtension on AbstractButtonStyle {
       textStyle,
       iconTheme,
       margin,
+    );
+  }
+
+  AbstractButtonStyle withBackgroundColor(
+      {Color? color,
+      Color? hoverColor,
+      Color? focusColor,
+      Color? disabledColor}) {
+    return copyWith(
+      decoration: (context, states, decoration) {
+        if (decoration is BoxDecoration) {
+          return decoration.copyWith(
+            color: states.disabled
+                ? disabledColor ?? decoration.color
+                : states.hovered
+                    ? hoverColor ?? decoration.color
+                    : states.focused
+                        ? focusColor ?? decoration.color
+                        : color,
+          );
+        }
+        return decoration;
+      },
+    );
+  }
+
+  AbstractButtonStyle withForegroundColor(
+      {Color? color,
+      Color? hoverColor,
+      Color? focusColor,
+      Color? disabledColor}) {
+    return copyWith(
+      textStyle: (context, states, textStyle) {
+        return textStyle.copyWith(
+          color: states.disabled
+              ? disabledColor ?? textStyle.color
+              : states.hovered
+                  ? hoverColor ?? textStyle.color
+                  : states.focused
+                      ? focusColor ?? textStyle.color
+                      : color,
+        );
+      },
+      iconTheme: (context, states, iconTheme) {
+        return iconTheme.copyWith(
+          color: states.disabled
+              ? disabledColor ?? iconTheme.color
+              : states.hovered
+                  ? hoverColor ?? iconTheme.color
+                  : states.focused
+                      ? focusColor ?? iconTheme.color
+                      : color,
+        );
+      },
+    );
+  }
+
+  AbstractButtonStyle withBorder(
+      {Border? border,
+      Border? hoverBorder,
+      Border? focusBorder,
+      Border? disabledBorder}) {
+    return copyWith(
+      decoration: (context, states, decoration) {
+        if (decoration is BoxDecoration) {
+          return decoration.copyWith(
+            border: states.disabled
+                ? disabledBorder ?? decoration.border
+                : states.hovered
+                    ? hoverBorder ?? decoration.border
+                    : states.focused
+                        ? focusBorder ?? decoration.border
+                        : border,
+          );
+        }
+        return decoration;
+      },
+    );
+  }
+
+  AbstractButtonStyle withBorderRadius(
+      {BorderRadiusGeometry? borderRadius,
+      BorderRadiusGeometry? hoverBorderRadius,
+      BorderRadiusGeometry? focusBorderRadius,
+      BorderRadiusGeometry? disabledBorderRadius}) {
+    return copyWith(
+      decoration: (context, states, decoration) {
+        if (decoration is BoxDecoration) {
+          return decoration.copyWith(
+            borderRadius: states.disabled
+                ? disabledBorderRadius ?? decoration.borderRadius
+                : states.hovered
+                    ? hoverBorderRadius ?? decoration.borderRadius
+                    : states.focused
+                        ? focusBorderRadius ?? decoration.borderRadius
+                        : borderRadius,
+          );
+        }
+        return decoration;
+      },
+    );
+  }
+
+  AbstractButtonStyle withPadding(
+      {EdgeInsetsGeometry? padding,
+      EdgeInsetsGeometry? hoverPadding,
+      EdgeInsetsGeometry? focusPadding,
+      EdgeInsetsGeometry? disabledPadding}) {
+    return copyWith(
+      padding: (context, states, padding) {
+        return states.disabled
+            ? disabledPadding ?? padding
+            : states.hovered
+                ? hoverPadding ?? padding
+                : states.focused
+                    ? focusPadding ?? padding
+                    : padding;
+      },
     );
   }
 }
@@ -1601,11 +2326,11 @@ Decoration _buttonOutlineDecoration(
   var themeData = Theme.of(context);
   if (states.contains(WidgetState.disabled)) {
     return BoxDecoration(
-      color: themeData.colorScheme.muted.withValues(
+      color: themeData.colorScheme.border.withValues(
         alpha: 0,
       ),
       border: Border.all(
-        color: themeData.colorScheme.muted,
+        color: themeData.colorScheme.border,
         width: 1,
       ),
       borderRadius: BorderRadius.circular(themeData.radiusMd),
@@ -2721,7 +3446,7 @@ class IconButton extends StatelessWidget {
   final GestureLongPressEndCallback? onLongPressEnd;
   final GestureLongPressUpCallback? onSecondaryLongPress;
   final GestureLongPressUpCallback? onTertiaryLongPress;
-  final ButtonVariance variance;
+  final AbstractButtonStyle variance;
 
   const IconButton({
     super.key,
@@ -3145,6 +3870,36 @@ class ButtonStyleOverrideData {
     this.iconTheme,
     this.margin,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+    return other is ButtonStyleOverrideData &&
+        other.decoration == decoration &&
+        other.mouseCursor == mouseCursor &&
+        other.padding == padding &&
+        other.textStyle == textStyle &&
+        other.iconTheme == iconTheme &&
+        other.margin == margin;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      decoration,
+      mouseCursor,
+      padding,
+      textStyle,
+      iconTheme,
+      margin,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ButtonStyleOverrideData(decoration: $decoration, mouseCursor: $mouseCursor, padding: $padding, textStyle: $textStyle, iconTheme: $iconTheme, margin: $margin)';
+  }
 }
 
 class ButtonGroup extends StatelessWidget {

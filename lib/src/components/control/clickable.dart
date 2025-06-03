@@ -107,16 +107,37 @@ class WidgetStatesProvider extends StatelessWidget {
   final WidgetStatesController? controller;
   final Set<WidgetState>? states;
   final Widget child;
+  final bool inherit;
+  final bool boundary;
 
   const WidgetStatesProvider({
-    Key? key,
-    required this.controller,
+    super.key,
+    this.controller,
     required this.child,
     this.states = const {},
-  }) : super(key: key);
+    this.inherit = true,
+  }) : boundary = false;
+
+  const WidgetStatesProvider.boundary({
+    super.key,
+    required this.child,
+  })  : boundary = true,
+        controller = null,
+        states = null,
+        inherit = false;
 
   @override
   Widget build(BuildContext context) {
+    if (boundary) {
+      return Data<WidgetStatesData>.boundary(
+        child: child,
+      );
+    }
+    Set<WidgetState>? parentStates;
+    if (inherit) {
+      WidgetStatesData? parentData = Data.maybeOf<WidgetStatesData>(context);
+      parentStates = parentData?.states;
+    }
     return ListenableBuilder(
       listenable: Listenable.merge([
         if (controller != null) controller!,
@@ -125,6 +146,9 @@ class WidgetStatesProvider extends StatelessWidget {
         Set<WidgetState> currentStates = states ?? {};
         if (controller != null) {
           currentStates = currentStates.union(controller!.value);
+        }
+        if (parentStates != null) {
+          currentStates = currentStates.union(parentStates);
         }
         return Data<WidgetStatesData>.inherit(
           data: WidgetStatesData(currentStates),
@@ -389,17 +413,19 @@ class _ClickableState extends State<Clickable> {
   Widget _builder(BuildContext context, Widget? _) {
     final theme = Theme.of(context);
     final enabled = widget.enabled;
-    Decoration? decoration = widget.decoration?.resolve(_controller.value);
+    var widgetStates = Data.maybeOf<WidgetStatesData>(context)?.states ?? {};
+    widgetStates = widgetStates.union(_controller.value);
+    Decoration? decoration = widget.decoration?.resolve(widgetStates);
     BorderRadiusGeometry borderRadius;
     if (decoration is BoxDecoration) {
       borderRadius = decoration.borderRadius ?? theme.borderRadiusMd;
     } else {
       borderRadius = theme.borderRadiusMd;
     }
-    var buttonContainer = _buildContainer(context, decoration);
+    var buttonContainer = _buildContainer(context, decoration, widgetStates);
     return FocusOutline(
       focused: widget.focusOutline &&
-          _controller.value.contains(WidgetState.focused) &&
+          widgetStates.contains(WidgetState.focused) &&
           !widget.disableFocusOutline,
       borderRadius: borderRadius,
       child: GestureDetector(
@@ -426,8 +452,9 @@ class _ClickableState extends State<Clickable> {
                   _controller.update(WidgetState.hovered, true);
                 }
                 _controller.update(WidgetState.pressed, true);
+                widget.onTapDown?.call(details);
               }
-            : null,
+            : widget.onTapDown,
         onTapUp: widget.onPressed != null
             ? (details) {
                 if (widget.enableFeedback) {
@@ -435,8 +462,9 @@ class _ClickableState extends State<Clickable> {
                   _controller.update(WidgetState.hovered, false);
                 }
                 _controller.update(WidgetState.pressed, false);
+                widget.onTapUp?.call(details);
               }
-            : null,
+            : widget.onTapUp,
         onTapCancel: widget.onPressed != null
             ? () {
                 if (widget.enableFeedback) {
@@ -444,8 +472,9 @@ class _ClickableState extends State<Clickable> {
                   _controller.update(WidgetState.hovered, false);
                 }
                 _controller.update(WidgetState.pressed, false);
+                widget.onTapCancel?.call();
               }
-            : null,
+            : widget.onTapCancel,
         child: FocusableActionDetector(
           enabled: enabled,
           focusNode: _focusNode,
@@ -501,18 +530,18 @@ class _ClickableState extends State<Clickable> {
             _controller.update(WidgetState.focused, value);
             widget.onFocus?.call(value);
           },
-          mouseCursor: widget.mouseCursor?.resolve(_controller.value) ??
-              MouseCursor.defer,
+          mouseCursor:
+              widget.mouseCursor?.resolve(widgetStates) ?? MouseCursor.defer,
           child: DefaultTextStyle.merge(
-            style: widget.textStyle?.resolve(_controller.value),
+            style: widget.textStyle?.resolve(widgetStates),
             child: IconTheme.merge(
-              data: widget.iconTheme?.resolve(_controller.value) ??
+              data: widget.iconTheme?.resolve(widgetStates) ??
                   const IconThemeData(),
               child: AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
                   return AnimatedValueBuilder(
-                    value: widget.transform?.resolve(_controller.value),
+                    value: widget.transform?.resolve(widgetStates),
                     duration: const Duration(milliseconds: 50),
                     lerp: lerpMatrix4,
                     builder: (context, value, child) {
@@ -545,9 +574,10 @@ class _ClickableState extends State<Clickable> {
     return tween.transform(t);
   }
 
-  Widget _buildContainer(BuildContext context, Decoration? decoration) {
-    var resolvedMargin = widget.margin?.resolve(_controller.value);
-    var resolvedPadding = widget.padding?.resolve(_controller.value);
+  Widget _buildContainer(BuildContext context, Decoration? decoration,
+      Set<WidgetState> widgetStates) {
+    var resolvedMargin = widget.margin?.resolve(widgetStates);
+    var resolvedPadding = widget.padding?.resolve(widgetStates);
     if (widget.disableTransition) {
       Widget container = Container(
         clipBehavior: Clip.antiAlias,

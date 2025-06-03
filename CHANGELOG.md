@@ -1,3 +1,130 @@
+## 0.0.37
+* Fixed web preloader issues
+* Fix PhoneInput initialValue not being passed
+* Added showTopSnapBar to WindowNavigator
+* Fix item picker issue with popover
+* Refactor IterableExtension to use ValueGetter instead of Supplier for buildSeparator method
+* Fixed issue with ResizablePane state management
+* Added a way to get form values individually with type-safe casting
+* Upgraded to Flutter 3.32.0
+
+## 0.0.36
+* Added native (adaptive) context menu builder for TextField
+* Added material context menu builder for TextField
+* Added cupertino context menu builder for TextField
+* Added parameter to skip input feature focus traversal
+* Fixed issue with validities casting in form widget
+
+## 0.0.35
+* Fix InputSpinner gesture
+* Added RadioCardThemeData (by @mcquenji)
+* Added PhoneInputTheme (by @mcquenji)
+* Fixed CalendarGridData
+* Added generic parameter type to `FormFieldHandle#reportNewFormValue` to handle typed-null value
+* Fixed LengthValidator issue with the validator ignores null value
+* Added title parameter to ItemPicker
+* Fixed async error issue with FormErrorBuilder
+* Fixed issue with FormEntry cached value not accepting null for the initial value
+* Removed FormValidationMode.waiting
+* ValidationResult is now attached to a FormKey
+* WaitingResult now stores proper validation mode value
+* Added errors getter on form controller
+* SubmitButton now uses FormErrorBuilder instead of handling its own state
+
+## 0.0.34
+* Excluded web loaders directory from package release
+* Disabled AutoComplete shortcuts and actions while suggestion popover is not open
+
+## 0.0.33
+* Added showValuePredicate parameter to Select, MultiSelect, ControlledSelect, and ControlledMultiSelect
+* Fixed AutoComplete suggestion item button 
+* Added AcceptSuggestionIntent and NavigateSuggestionIntent to AutoComplete
+* Added resizeToAvoidBottomInset to Scaffold
+
+## 0.0.32
+* Fixed StarRating component
+* Added InputFeatureVisibility
+* Fixed Password Toggle Input Feature
+
+## 0.0.31
+* Added ItemPicker component
+* Fixed TimePicker text field vertical align
+* Fixed incorrect popover signature
+* Added repaint boundary to Scaffold and NavigationBar
+* Improved Text extension
+
+## 0.0.30
+* Fixed Sheet autoOpen issue
+* Fixed incorrect MultiSelectKey FormKey type
+* Fixed Focus issue on closing dialog
+* Fixed Focus issue on closing popover
+* Default locale now accepts all language as a fallback
+* Fix scaffold MediaQuery padding
+* Added DateInput component
+* Added TimeInput component
+* Added DurationInput component
+* Improved sonner/toast component hover animation
+* Added PrimaryButtonTheme
+* Added SecondaryButtonTheme
+* Added OutlineButtonTheme
+* Added GhostButtonTheme
+* Added DestructiveButtonTheme
+* Added LinkButtonTheme
+* Added MutedButtonTheme
+* Added CardButtonTheme
+* Added TextButtonTheme
+* Added MenuButtonTheme
+* Added MenubarButtonTheme
+* Added FixedButtonTheme
+* FormattedInput now properly transfer focus when done editing one of the part
+
+## 0.0.29
+* Properly bundled Geist and Geist Mono fonts
+* Properly bundled Radix and Bootstrap Icons
+* Added Lucide Icons
+* Added style to SelectItemButton
+* Added MultiSelectChip component
+* MultiSelect now uses MultiSelectChip as the itemBuilder
+* Added more extension methods to AbstractButtonStyle
+* Added Swiper component
+* TextEditingController no longer implements ComponentController
+* NavigationLabeled now uses directional padding
+* Fixed StarRatings on mobile devices
+* Fixed SheetOverlayHandler safe area issue
+
+## 0.0.28
+* Added no virtualization mode on Select and MultiSelect Popup
+* Added intrinsic PopupConstraint
+* Fixed autoClosePopup on Select and MultiSelect
+
+## 0.0.27
+* Fix ControlledComponent initial state issue
+
+## 0.0.26
+* Added ControlledComponent and ComponentController
+* Added DateInput component
+* Added FormattedInput component
+* Fixed Calendar component
+* Added ControlledCheckbox component
+* Added ControlledChips component
+* Added ControlledChipInput component
+* Added ControlledDatePicker component
+* Added ControlledRadioGroup component
+* Added ControlledSelect component
+* Added ControlledSlider component
+* Added ControlledStarRating component
+* Added ControlledSwitch component
+* Added ControlledTimePicker component
+* Added ControlledToggle component
+* Select and MultiSelect rework
+* Added IgnoreForm component
+* Remove non-alphanumeric filter on Avatar getInitials
+* TextField no longer wraps material TextField
+* Removed deprecated withOpacity usage
+* Added WidgetStateProvider component
+* Fix ContextMenu state issue
+* Fix select hover scroll color
+
 ## 0.0.25
 * Tabs, TabList, and TabPane are now based on the new TabContainer
 * Fixed InputOTP onSubmit issue

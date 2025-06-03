@@ -297,6 +297,20 @@ class StillKeyframe<T> implements Keyframe<T> {
   }
 }
 
+class TimelineAnimatable<T> extends Animatable<T> {
+  final Duration duration;
+  final TimelineAnimation<T> animation;
+
+  TimelineAnimatable(this.duration, this.animation);
+
+  @override
+  T transform(double t) {
+    Duration selfDuration = animation.totalDuration;
+    double selfT = (t * selfDuration.inMilliseconds) / duration.inMilliseconds;
+    return animation.transform(selfT);
+  }
+}
+
 class TimelineAnimation<T> extends Animatable<T> {
   static T defaultLerp<T>(T a, T b, double t) {
     return ((a as dynamic) + ((b as dynamic) - (a as dynamic)) * t) as T;
@@ -334,6 +348,18 @@ class TimelineAnimation<T> extends Animatable<T> {
   Duration _computeDuration(double t) {
     final totalDuration = this.totalDuration;
     return Duration(milliseconds: (t * totalDuration.inMilliseconds).floor());
+  }
+
+  TimelineAnimatable<T> drive(AnimationController controller) {
+    return TimelineAnimatable(controller.duration!, this);
+  }
+
+  T transformWithController(AnimationController controller) {
+    return drive(controller).transform(controller.value);
+  }
+
+  TimelineAnimatable<T> withTotalDuration(Duration duration) {
+    return TimelineAnimatable(duration, this);
   }
 
   @override

@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 typedef Predicate<T> = bool Function(T value);
+typedef UnaryOperator<T> = T Function(T value);
+typedef BinaryOperator<T> = T Function(T a, T b);
 
 const kDefaultDuration = Duration(milliseconds: 150);
 
@@ -11,6 +13,9 @@ typedef ContextedCallback = void Function(BuildContext context);
 typedef ContextedValueChanged<T> = void Function(BuildContext context, T value);
 
 typedef SearchPredicate<T> = double Function(T value, String query);
+
+double degToRad(double deg) => deg * (pi / 180);
+double radToDeg(double rad) => rad * (180 / pi);
 
 enum SortDirection {
   none,
@@ -89,6 +94,13 @@ extension ListExtension<T> on List<T> {
     }
     T element = this[currentIndex];
     return swapItem(element, targetIndex);
+  }
+
+  T? optGet(int index) {
+    if (index < 0 || index >= length) {
+      return null;
+    }
+    return this[index];
   }
 }
 
@@ -307,9 +319,26 @@ extension IterableExtension<T> on Iterable<T> {
   Iterable<T> joinSeparator(T separator) {
     return map((e) => [separator, e]).expand((element) => element).skip(1);
   }
+
+  Iterable<T> buildSeparator(ValueGetter<T> separator) {
+    return map((e) => [separator(), e]).expand((element) => element).skip(1);
+  }
 }
 
+typedef NeverWidgetBuilder = Widget Function(
+    [dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic,
+    dynamic]);
+
 extension WidgetExtension on Widget {
+  NeverWidgetBuilder get asBuilder => ([a, b, c, d, e, f, g, h, i, j]) => this;
   Widget sized({double? width, double? height}) {
     if (this is SizedBox) {
       return SizedBox(
@@ -329,26 +358,34 @@ extension WidgetExtension on Widget {
       {double? minWidth,
       double? maxWidth,
       double? minHeight,
-      double? maxHeight}) {
+      double? maxHeight,
+      double? width,
+      double? height}) {
     if (this is ConstrainedBox) {
       return ConstrainedBox(
         constraints: BoxConstraints(
-          minWidth: minWidth ?? (this as ConstrainedBox).constraints.minWidth,
-          maxWidth: maxWidth ?? (this as ConstrainedBox).constraints.maxWidth,
-          minHeight:
-              minHeight ?? (this as ConstrainedBox).constraints.minHeight,
-          maxHeight:
-              maxHeight ?? (this as ConstrainedBox).constraints.maxHeight,
+          minWidth: width ??
+              minWidth ??
+              (this as ConstrainedBox).constraints.minWidth,
+          maxWidth: width ??
+              maxWidth ??
+              (this as ConstrainedBox).constraints.maxWidth,
+          minHeight: height ??
+              minHeight ??
+              (this as ConstrainedBox).constraints.minHeight,
+          maxHeight: height ??
+              maxHeight ??
+              (this as ConstrainedBox).constraints.maxHeight,
         ),
         child: (this as ConstrainedBox).child,
       );
     }
     return ConstrainedBox(
       constraints: BoxConstraints(
-        minWidth: minWidth ?? 0,
-        maxWidth: maxWidth ?? double.infinity,
-        minHeight: minHeight ?? 0,
-        maxHeight: maxHeight ?? double.infinity,
+        minWidth: width ?? minWidth ?? 0,
+        maxWidth: width ?? maxWidth ?? double.infinity,
+        minHeight: height ?? minHeight ?? 0,
+        maxHeight: height ?? maxHeight ?? double.infinity,
       ),
       child: this,
     );
@@ -870,5 +907,230 @@ class TimeOfDay {
   @override
   String toString() {
     return 'TimeOfDay{hour: $hour, minute: $minute, second: $second}';
+  }
+}
+
+(bool enabled, Object? invokeResult) invokeActionOnFocusedWidget(
+    Intent intent) {
+  final context = primaryFocus?.context;
+  if (context != null) {
+    Action<Intent>? action = Actions.maybeFind<Intent>(context, intent: intent);
+    if (action != null) {
+      final (bool enabled, Object? invokeResult) =
+          Actions.of(context).invokeActionIfEnabled(action, intent);
+      return (enabled, invokeResult);
+    }
+  }
+  return (false, null);
+}
+
+extension TextEditingControllerExtension on TextEditingController {
+  String? get currentWord {
+    final value = this.value;
+    final text = value.text;
+    final selection = value.selection;
+    if (text.isEmpty) {
+      return null;
+    }
+    if (selection.isCollapsed) {
+      return getWordAtCaret(text, selection.baseOffset).$2;
+    }
+    return null;
+  }
+}
+
+typedef WordInfo = (int start, String word);
+typedef ReplacementInfo = (int start, String newText);
+
+WordInfo getWordAtCaret(String text, int caret, [String separator = ' ']) {
+  if (caret < 0 || caret > text.length) {
+    throw RangeError('Caret position is out of bounds.');
+  }
+
+  // Find the start of the word
+  int start = caret;
+  while (start > 0 && !separator.contains(text[start - 1])) {
+    start--;
+  }
+
+  // Find the end of the word
+  int end = caret;
+  while (end < text.length && !separator.contains(text[end])) {
+    end++;
+  }
+
+  // Return the start index and the word at the caret position
+  String word = text.substring(start, end);
+  return (start, word);
+}
+
+ReplacementInfo replaceWordAtCaret(String text, int caret, String replacement,
+    [String separator = ' ']) {
+  if (caret < 0 || caret > text.length) {
+    throw RangeError('Caret position is out of bounds.');
+  }
+
+  // Get the start and end of the word
+  int start = caret;
+  while (start > 0 && !separator.contains(text[start - 1])) {
+    start--;
+  }
+
+  int end = caret;
+  while (end < text.length && !separator.contains(text[end])) {
+    end++;
+  }
+
+  // Replace the word with the replacement
+  String newText = text.replaceRange(start, end, replacement);
+  return (start, newText);
+}
+
+void clearActiveTextInput() {
+  TextFieldClearIntent intent = const TextFieldClearIntent();
+  invokeActionOnFocusedWidget(intent);
+}
+
+mixin CachedValue {
+  bool shouldRebuild(covariant CachedValue oldValue);
+}
+
+class CachedValueWidget<T> extends StatefulWidget {
+  final T value;
+  final Widget Function(BuildContext context, T value) builder;
+
+  const CachedValueWidget({
+    super.key,
+    required this.value,
+    required this.builder,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _CachedValueWidgetState<T>();
+}
+
+class _CachedValueWidgetState<T> extends State<CachedValueWidget<T>> {
+  Widget? _cachedWidget;
+
+  @override
+  void didUpdateWidget(covariant CachedValueWidget<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (T is CachedValue) {
+      if ((widget.value as CachedValue)
+          .shouldRebuild(oldWidget.value as CachedValue)) {
+        _cachedWidget = null;
+      }
+    } else {
+      if (widget.value != oldWidget.value) {
+        _cachedWidget = null;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _cachedWidget ??= widget.builder(context, widget.value);
+    return _cachedWidget!;
+  }
+}
+
+typedef Convert<F, T> = T Function(F value);
+
+class BiDirectionalConvert<A, B> {
+  final Convert<A, B> aToB;
+  final Convert<B, A> bToA;
+
+  const BiDirectionalConvert(this.aToB, this.bToA);
+
+  B convertA(A value) => aToB(value);
+
+  A convertB(B value) => bToA(value);
+
+  @override
+  String toString() {
+    return 'BiDirectionalConvert($aToB, $bToA)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is BiDirectionalConvert<A, B> &&
+        other.aToB == aToB &&
+        other.bToA == bToA;
+  }
+}
+
+class ConvertedController<F, T> extends ChangeNotifier
+    implements ComponentController<T> {
+  final ValueNotifier<F> _other;
+  final BiDirectionalConvert<F, T> _convert;
+
+  T _value;
+  bool _isUpdating = false;
+
+  ConvertedController(
+      ValueNotifier<F> other, BiDirectionalConvert<F, T> convert)
+      : _other = other,
+        _convert = convert,
+        _value = convert.convertA(other.value) {
+    _other.addListener(_onOtherValueChanged);
+  }
+
+  void _onOtherValueChanged() {
+    if (_isUpdating) {
+      return;
+    }
+    _isUpdating = true;
+    try {
+      _value = _convert.convertA(_other.value);
+      notifyListeners();
+    } finally {
+      _isUpdating = false;
+    }
+  }
+
+  void _onValueChanged() {
+    if (_isUpdating) {
+      return;
+    }
+    _isUpdating = true;
+    try {
+      _other.value = _convert.convertB(_value);
+    } finally {
+      _isUpdating = false;
+    }
+  }
+
+  @override
+  T get value => _value;
+
+  @override
+  set value(T newValue) {
+    if (newValue == _value) {
+      return;
+    }
+    _value = newValue;
+    notifyListeners();
+    _onValueChanged();
+  }
+
+  @override
+  void dispose() {
+    _other.removeListener(_onOtherValueChanged);
+    super.dispose();
+  }
+}
+
+extension TextEditingValueExtension on TextEditingValue {
+  TextEditingValue replaceText(String newText) {
+    var selection = this.selection;
+    selection = selection.copyWith(
+      baseOffset: selection.baseOffset.clamp(0, newText.length),
+      extentOffset: selection.extentOffset.clamp(0, newText.length),
+    );
+    return TextEditingValue(
+      text: newText,
+      selection: selection,
+    );
   }
 }

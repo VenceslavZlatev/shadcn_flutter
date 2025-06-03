@@ -23,9 +23,11 @@ import 'package:docs/pages/docs/components/dot_indicator_example.dart';
 import 'package:docs/pages/docs/components/drawer_example.dart';
 import 'package:docs/pages/docs/components/dropdown_menu_example.dart';
 import 'package:docs/pages/docs/components/expandable_sidebar_example.dart';
+import 'package:docs/pages/docs/components/formatted_input_example.dart';
 import 'package:docs/pages/docs/components/hover_card_example.dart';
 import 'package:docs/pages/docs/components/input_example.dart';
 import 'package:docs/pages/docs/components/input_otp_example.dart';
+import 'package:docs/pages/docs/components/item_picker_example.dart';
 import 'package:docs/pages/docs/components/keyboard_display_example.dart';
 import 'package:docs/pages/docs/components/linear_progress_example.dart';
 import 'package:docs/pages/docs/components/material_example.dart';
@@ -55,6 +57,7 @@ import 'package:docs/pages/docs/components/sortable_example.dart';
 import 'package:docs/pages/docs/components/star_rating_example.dart';
 import 'package:docs/pages/docs/components/stepper_example.dart';
 import 'package:docs/pages/docs/components/steps_example.dart';
+import 'package:docs/pages/docs/components/swiper_example.dart';
 import 'package:docs/pages/docs/components/switch_example.dart';
 import 'package:docs/pages/docs/components/tab_list_example.dart';
 import 'package:docs/pages/docs/components/tab_pane_example.dart';
@@ -80,9 +83,11 @@ import 'package:docs/pages/docs/theme_page.dart';
 import 'package:docs/pages/docs/typography_page.dart';
 import 'package:docs/pages/docs/web_preloader_page.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yaml/yaml.dart';
 
 import 'pages/docs/components/badge_example.dart';
 import 'pages/docs/components/breadcrumb_example.dart';
@@ -99,8 +104,31 @@ import 'pages/docs/components/number_input_example.dart';
 
 const kEnablePersistentPath = false;
 
+Map<String, Object?>? _docs;
+String? _packageLatestVersion;
+
+String? get packageLatestVersion => _packageLatestVersion;
+
+String get flavor {
+  String? flavor = _docs?['flavor'] as String?;
+  assert(flavor != null, 'Flavor not found in docs.json');
+  return flavor!;
+}
+
+String getReleaseTagName() {
+  var latestVersion = packageLatestVersion;
+  return latestVersion == null ? 'Release' : 'Release ($latestVersion)';
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _docs = jsonDecode(await rootBundle.loadString('docs.json'));
+  String pubspecYml = await rootBundle.loadString('pubspec.lock');
+  var dep = loadYaml(pubspecYml)['packages']['shadcn_flutter']['version'];
+  if (dep is String) {
+    _packageLatestVersion = dep;
+  }
+  print('Running app with flavor: $flavor');
   GoRouter.optionURLReflectsImperativeAPIs = true;
   final prefs = await SharedPreferences.getInstance();
   var colorScheme = prefs.getString('colorScheme');
@@ -696,6 +724,26 @@ class MyAppState extends State<MyApp> {
             path: 'expandable_sidebar',
             builder: (context, state) => const ExpandableSidebarExample(),
             name: 'expandable_sidebar',
+          ),
+          GoRoute(
+              path: 'formatted_input',
+              builder: (context, state) {
+                return const FormattedInputExample();
+              },
+              name: 'formatted_input'),
+          GoRoute(
+            path: 'swiper',
+            name: 'swiper',
+            builder: (context, state) {
+              return const SwiperExample();
+            },
+          ),
+          GoRoute(
+            path: 'item_picker',
+            name: 'item_picker',
+            builder: (context, state) {
+              return const ItemPickerExample();
+            },
           )
         ]),
   ];
