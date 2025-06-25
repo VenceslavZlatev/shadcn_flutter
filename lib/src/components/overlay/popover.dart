@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
@@ -27,13 +28,14 @@ class PopoverOverlayHandler extends OverlayHandler {
     EdgeInsetsGeometry? margin,
     bool follow = true,
     bool consumeOutsideTaps = true,
-    ValueChanged<PopoverAnchorState>? onTickFollow,
+    ValueChanged<PopoverOverlayWidgetState>? onTickFollow,
     bool allowInvertHorizontal = true,
     bool allowInvertVertical = true,
     bool dismissBackdropFocus = true,
     Duration? showDuration,
     Duration? dismissDuration,
     OverlayBarrier? overlayBarrier,
+    LayerLink? layerLink,
   }) {
     TextDirection textDirection = Directionality.of(context);
     Alignment resolvedAlignment = alignment.resolve(textDirection);
@@ -95,12 +97,13 @@ class PopoverOverlayHandler extends OverlayHandler {
     overlayEntry = OverlayEntry(
       builder: (innerContext) {
         return RepaintBoundary(
-          child: FocusScope(
-            autofocus: dismissBackdropFocus,
-            child: AnimatedBuilder(
-                animation: isClosed,
-                builder: (innerContext, child) {
-                  return AnimatedValueBuilder.animation(
+          child: AnimatedBuilder(
+              animation: isClosed,
+              builder: (innerContext, child) {
+                return FocusScope(
+                  autofocus: dismissBackdropFocus,
+                  canRequestFocus: !isClosed.value,
+                  child: AnimatedValueBuilder.animation(
                       value: isClosed.value ? 0.0 : 1.0,
                       initialValue: 0.0,
                       curve: isClosed.value
@@ -118,7 +121,7 @@ class PopoverOverlayHandler extends OverlayHandler {
                         }
                       },
                       builder: (innerContext, animation) {
-                        var popoverAnchor = PopoverAnchor(
+                        var popoverAnchor = PopoverOverlayWidget(
                           animation: animation,
                           onTapOutside: () {
                             if (isClosed.value) return;
@@ -166,9 +169,9 @@ class PopoverOverlayHandler extends OverlayHandler {
                           },
                         );
                         return popoverAnchor;
-                      });
-                }),
-          ),
+                      }),
+                );
+              }),
         );
       },
     );
@@ -181,8 +184,8 @@ class PopoverOverlayHandler extends OverlayHandler {
   }
 }
 
-class PopoverAnchor extends StatefulWidget {
-  const PopoverAnchor({
+class PopoverOverlayWidget extends StatefulWidget {
+  const PopoverOverlayWidget({
     super.key,
     required this.anchorContext,
     this.position,
@@ -209,6 +212,7 @@ class PopoverAnchor extends StatefulWidget {
     this.onClose,
     this.onImmediateClose,
     this.onCloseWithResult,
+    this.layerLink,
   });
 
   final Offset? position;
@@ -232,25 +236,27 @@ class PopoverAnchor extends StatefulWidget {
   final bool follow;
   final BuildContext anchorContext;
   final bool consumeOutsideTaps;
-  final ValueChanged<PopoverAnchorState>? onTickFollow;
+  final ValueChanged<PopoverOverlayWidgetState>? onTickFollow;
   final bool allowInvertHorizontal;
   final bool allowInvertVertical;
   final PopoverFutureVoidCallback<Object?>? onCloseWithResult;
+  final LayerLink? layerLink;
 
   @override
-  State<PopoverAnchor> createState() => PopoverAnchorState();
+  State<PopoverOverlayWidget> createState() => PopoverOverlayWidgetState();
 }
 
 typedef PopoverFutureVoidCallback<T> = Future<T> Function(T value);
 
 enum PopoverConstraint {
   flexible,
+  intrinsic,
   anchorFixedSize,
   anchorMinSize,
   anchorMaxSize,
 }
 
-class PopoverAnchorState extends State<PopoverAnchor>
+class PopoverOverlayWidgetState extends State<PopoverOverlayWidget>
     with SingleTickerProviderStateMixin, OverlayHandlerStateMixin {
   late BuildContext _anchorContext;
   late Offset? _position;
@@ -265,6 +271,7 @@ class PopoverAnchorState extends State<PopoverAnchor>
   late bool _allowInvertHorizontal;
   late bool _allowInvertVertical;
   late Ticker _ticker;
+  late LayerLink? _layerLink;
 
   @override
   set offset(Offset? offset) {
@@ -290,8 +297,9 @@ class PopoverAnchorState extends State<PopoverAnchor>
     _anchorContext = widget.anchorContext;
     _allowInvertHorizontal = widget.allowInvertHorizontal;
     _allowInvertVertical = widget.allowInvertVertical;
+    _layerLink = widget.layerLink;
     _ticker = createTicker(_tick);
-    if (_follow) {
+    if (_follow && _layerLink == null) {
       _ticker.start();
     }
   }
@@ -318,7 +326,7 @@ class PopoverAnchorState extends State<PopoverAnchor>
   }
 
   @override
-  void didUpdateWidget(covariant PopoverAnchor oldWidget) {
+  void didUpdateWidget(covariant PopoverOverlayWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.alignment != widget.alignment) {
       _alignment = widget.alignment;
@@ -342,13 +350,23 @@ class PopoverAnchorState extends State<PopoverAnchor>
     if (oldWidget.margin != widget.margin) {
       _margin = widget.margin;
     }
+    bool shouldStartTicker = false;
     if (oldWidget.follow != widget.follow) {
       _follow = widget.follow;
-      if (_follow) {
-        _ticker.start();
-      } else {
-        _ticker.stop();
+      if (widget.follow) {
+        shouldStartTicker = true;
       }
+    }
+    if (_layerLink != widget.layerLink) {
+      _layerLink = widget.layerLink;
+      if (_layerLink != null) {
+        shouldStartTicker = false;
+      }
+    }
+    if (shouldStartTicker && !_ticker.isActive) {
+      _ticker.start();
+    } else if (!shouldStartTicker && _ticker.isActive) {
+      _ticker.stop();
     }
     if (oldWidget.anchorContext != widget.anchorContext) {
       _anchorContext = widget.anchorContext;
@@ -376,6 +394,23 @@ class PopoverAnchorState extends State<PopoverAnchor>
   BuildContext get anchorContext => _anchorContext;
   bool get allowInvertHorizontal => _allowInvertHorizontal;
   bool get allowInvertVertical => _allowInvertVertical;
+  LayerLink? get layerLink => _layerLink;
+
+  set layerLink(LayerLink? value) {
+    if (_layerLink != value) {
+      setState(() {
+        _layerLink = value;
+        if (_follow && _layerLink == null) {
+          if (!_ticker.isActive) {
+            _ticker.start();
+          }
+        } else {
+          _ticker.stop();
+        }
+      });
+    }
+  }
+
   @override
   set alignment(AlignmentGeometry value) {
     if (_alignment != value) {
@@ -541,7 +576,9 @@ class PopoverAnchorState extends State<PopoverAnchor>
             },
             child: FadeTransition(
               opacity: widget.animation,
-              child: widget.builder(context),
+              child: Builder(builder: (context) {
+                return widget.builder(context);
+              }),
             ),
           ),
         ),
@@ -570,8 +607,8 @@ Future<void> closePopover<T>(BuildContext context, [T? result]) {
 class OverlayPopoverEntry<T> implements OverlayCompleter<T> {
   late OverlayEntry _overlayEntry;
   late OverlayEntry? _barrierEntry;
-  final Completer<T> completer = Completer();
-  final Completer<T> animationCompleter = Completer<T>();
+  final Completer<T?> completer = Completer();
+  final Completer<T?> animationCompleter = Completer();
 
   bool _removed = false;
   bool _disposed = false;
@@ -601,10 +638,10 @@ class OverlayPopoverEntry<T> implements OverlayCompleter<T> {
   }
 
   @override
-  Future<T> get future => completer.future;
+  Future<T?> get future => completer.future;
 
   @override
-  Future<T> get animationFuture => animationCompleter.future;
+  Future<T?> get animationFuture => animationCompleter.future;
 
   @override
   bool get isAnimationCompleted => animationCompleter.isCompleted;
@@ -629,7 +666,7 @@ OverlayCompleter<T?> showPopover<T>({
   EdgeInsetsGeometry? margin,
   bool follow = true,
   bool consumeOutsideTaps = true,
-  ValueChanged<PopoverAnchorState>? onTickFollow,
+  ValueChanged<PopoverOverlayWidgetState>? onTickFollow,
   bool allowInvertHorizontal = true,
   bool allowInvertVertical = true,
   bool dismissBackdropFocus = true,
@@ -729,7 +766,7 @@ class PopoverController extends ChangeNotifier {
     AlignmentGeometry? transitionAlignment,
     bool consumeOutsideTaps = true,
     EdgeInsetsGeometry? margin,
-    ValueChanged<PopoverAnchorState>? onTickFollow,
+    ValueChanged<PopoverOverlayWidgetState>? onTickFollow,
     bool follow = true,
     bool allowInvertHorizontal = true,
     bool allowInvertVertical = true,
@@ -1148,6 +1185,11 @@ class PopoverLayoutRender extends RenderShiftedBox {
     } else if (_widthConstraint == PopoverConstraint.anchorMaxSize) {
       assert(_anchorSize != null, 'anchorSize must not be null');
       maxWidth = _anchorSize!.width;
+    } else if (_widthConstraint == PopoverConstraint.intrinsic) {
+      double intrinsicWidth = child!.getMaxIntrinsicWidth(double.infinity);
+      if (intrinsicWidth.isFinite) {
+        maxWidth = max(minWidth, intrinsicWidth);
+      }
     }
     if (_heightConstraint == PopoverConstraint.anchorFixedSize) {
       assert(_anchorSize != null, 'anchorSize must not be null');
@@ -1159,6 +1201,11 @@ class PopoverLayoutRender extends RenderShiftedBox {
     } else if (_heightConstraint == PopoverConstraint.anchorMaxSize) {
       assert(_anchorSize != null, 'anchorSize must not be null');
       maxHeight = _anchorSize!.height;
+    } else if (_heightConstraint == PopoverConstraint.intrinsic) {
+      double intrinsicHeight = child!.getMaxIntrinsicHeight(double.infinity);
+      if (intrinsicHeight.isFinite) {
+        maxHeight = max(minHeight, intrinsicHeight);
+      }
     }
     return BoxConstraints(
       minWidth: minWidth,

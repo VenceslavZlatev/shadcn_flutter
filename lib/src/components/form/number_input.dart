@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
+@Deprecated('Use TextField with InputFeature.spinner() instead.')
 class NumberInput extends StatefulWidget {
   static final _decimalFormatter = FilteringTextInputFormatter.allow(
     RegExp(r'^-?[0-9]+\.?[0-9]*$'),
@@ -106,7 +107,7 @@ class _NumberInputState extends State<NumberInput>
   }
 
   Widget buildButton(BuildContext context, ThemeData theme) {
-    return Container(
+    return SizedBox(
       width: 24 * theme.scaling,
       height: 32 * theme.scaling,
       child: GestureDetector(

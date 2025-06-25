@@ -1,4 +1,7 @@
 import 'package:docs/pages/docs/components/select/select_example_1.dart';
+import 'package:docs/pages/docs/components/select/select_example_2.dart';
+import 'package:docs/pages/docs/components/select/select_example_3.dart';
+import 'package:docs/pages/docs/components/select/select_example_4.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../widget_usage_example.dart';
@@ -19,6 +22,21 @@ class SelectExample extends StatelessWidget {
           title: 'Example',
           path: 'lib/pages/docs/components/select/select_example_1.dart',
           child: SelectExample1(),
+        ),
+        WidgetUsageExample(
+          title: 'Example with search',
+          path: 'lib/pages/docs/components/select/select_example_2.dart',
+          child: SelectExample2(),
+        ),
+        WidgetUsageExample(
+          title: 'Asynchronous infinite example',
+          path: 'lib/pages/docs/components/select/select_example_3.dart',
+          child: SelectExample3(),
+        ),
+        WidgetUsageExample(
+          title: 'Example with no virtualization',
+          path: 'lib/pages/docs/components/select/select_example_4.dart',
+          child: SelectExample4(),
         ),
       ],
     );

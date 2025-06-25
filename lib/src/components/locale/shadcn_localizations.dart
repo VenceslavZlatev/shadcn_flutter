@@ -11,7 +11,7 @@ class ShadcnLocalizationsDelegate
   const ShadcnLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => locale.languageCode == 'en';
+  bool isSupported(Locale locale) => true;
 
   @override
   Future<ShadcnLocalizations> load(Locale locale) {
@@ -64,6 +64,40 @@ String formatFileSize(int bytes, SizeUnitLocale unit) {
   return '$formattedValue ${units[digitGroups]}';
 }
 
+int _getYear(DateTime dateTime) => dateTime.year;
+int _getMonth(DateTime dateTime) => dateTime.month;
+int _getDay(DateTime dateTime) => dateTime.day;
+
+(int? min, int? max) _computeYearValueRange(Map<DatePart, int> values) {
+  return (null, null);
+}
+
+(int? min, int? max) _computeMonthValueRange(Map<DatePart, int> values) {
+  return (1, 12);
+}
+
+(int? min, int? max) _computeDayValueRange(Map<DatePart, int> values) {
+  final year = values[DatePart.year];
+  final month = values[DatePart.month];
+  if (year == null || month == null) return (1, 31);
+  final daysInMonth = DateTime(year, month + 1, 0).day;
+  return (1, daysInMonth);
+}
+
+enum DatePart {
+  year(_getYear, _computeYearValueRange, length: 4),
+  month(_getMonth, _computeMonthValueRange),
+  day(_getDay, _computeDayValueRange),
+  ;
+
+  final int Function(DateTime dateTime) getter;
+  final int length;
+  final (int? min, int? max) Function(Map<DatePart, int> values)
+      computeValueRange;
+
+  const DatePart(this.getter, this.computeValueRange, {this.length = 2});
+}
+
 abstract class ShadcnLocalizations {
   static ShadcnLocalizations of(BuildContext context) {
     return Localizations.of<ShadcnLocalizations>(
@@ -90,6 +124,22 @@ abstract class ShadcnLocalizations {
   String get formPasswordLowercase;
   String get formPasswordUppercase;
   String get formPasswordSpecial;
+
+  List<DatePart> get datePartsOrder;
+  String get dateYearAbbreviation;
+  String get dateMonthAbbreviation;
+  String get dateDayAbbreviation;
+
+  String getDatePartAbbreviation(DatePart part) {
+    switch (part) {
+      case DatePart.year:
+        return dateYearAbbreviation;
+      case DatePart.month:
+        return dateMonthAbbreviation;
+      case DatePart.day:
+        return dateDayAbbreviation;
+    }
+  }
 
   String get commandSearch;
   String get commandEmpty;
@@ -283,6 +333,45 @@ abstract class ShadcnLocalizations {
     }
   }
 
+  String get timeDaysAbbreviation;
+  String get timeHoursAbbreviation;
+  String get timeMinutesAbbreviation;
+  String get timeSecondsAbbreviation;
+  String get placeholderDurationPicker;
+  String formatDuration(Duration duration,
+      {bool showDays = true,
+      bool showHours = true,
+      bool showMinutes = true,
+      bool showSeconds = true});
+  String get durationDay;
+  String get durationHour;
+  String get durationMinute;
+  String get durationSecond;
+
+  String getDurationPartAbbreviation(DurationPart part) {
+    switch (part) {
+      case DurationPart.day:
+        return timeDaysAbbreviation;
+      case DurationPart.hour:
+        return timeHoursAbbreviation;
+      case DurationPart.minute:
+        return timeMinutesAbbreviation;
+      case DurationPart.second:
+        return timeSecondsAbbreviation;
+    }
+  }
+
+  String getTimePartAbbreviation(TimePart part) {
+    switch (part) {
+      case TimePart.hour:
+        return timeHoursAbbreviation;
+      case TimePart.minute:
+        return timeMinutesAbbreviation;
+      case TimePart.second:
+        return timeSecondsAbbreviation;
+    }
+  }
+
   Map<String, String> get localizedMimeTypes;
 }
 
@@ -373,6 +462,18 @@ class DefaultShadcnLocalizations extends ShadcnLocalizations {
     'audio/3gpp2': '3GPP2 Audio/Video Container',
     'application/x-7z-compressed': '7-Zip Archive',
   };
+
+  @override
+  String get timeDaysAbbreviation => 'DD';
+
+  @override
+  String get timeHoursAbbreviation => 'HH';
+
+  @override
+  String get timeMinutesAbbreviation => 'MM';
+
+  @override
+  String get timeSecondsAbbreviation => 'SS';
 
   @override
   String get commandSearch => 'Type a command or search...';
@@ -553,6 +654,15 @@ class DefaultShadcnLocalizations extends ShadcnLocalizations {
     }
     return result;
   }
+
+  @override
+  String get dateYearAbbreviation => 'YYYY';
+
+  @override
+  String get dateMonthAbbreviation => 'MM';
+
+  @override
+  String get dateDayAbbreviation => 'DD';
 
   @override
   String get placeholderDatePicker => 'Select a date';
@@ -757,4 +867,53 @@ class DefaultShadcnLocalizations extends ShadcnLocalizations {
   String dataTableSelectedRows(int count, int total) {
     return '$count of $total row(s) selected.';
   }
+
+  @override
+  List<DatePart> get datePartsOrder => const [
+        // MM/DD/YYYY
+        DatePart.month,
+        DatePart.day,
+        DatePart.year,
+      ];
+
+  @override
+  String get durationDay => 'Day';
+
+  @override
+  String get durationHour => 'Hour';
+
+  @override
+  String get durationMinute => 'Minute';
+
+  @override
+  String get durationSecond => 'Second';
+
+  @override
+  String formatDuration(Duration duration,
+      {bool showDays = true,
+      bool showHours = true,
+      bool showMinutes = true,
+      bool showSeconds = true}) {
+    final days = duration.inDays;
+    final hours = duration.inHours % Duration.hoursPerDay;
+    final minutes = duration.inMinutes % Duration.minutesPerHour;
+    final seconds = duration.inSeconds % Duration.secondsPerMinute;
+    final parts = <String>[];
+    if (showDays && days > 0) {
+      parts.add('${days}d');
+    }
+    if (showHours && hours > 0) {
+      parts.add('${hours}h');
+    }
+    if (showMinutes && minutes > 0) {
+      parts.add('${minutes}m');
+    }
+    if (showSeconds && seconds > 0) {
+      parts.add('${seconds}s');
+    }
+    return parts.join(' ');
+  }
+
+  @override
+  String get placeholderDurationPicker => 'Select a duration';
 }

@@ -18,7 +18,7 @@ class PopoverExample1 extends StatelessWidget {
             borderRadius: theme.borderRadiusLg,
           ),
           builder: (context) {
-            return SurfaceCard(
+            return ModalContainer(
               child: SizedBox(
                 width: 300,
                 child: Column(
@@ -67,7 +67,7 @@ class PopoverExample1 extends StatelessWidget {
                       onPressed: () {
                         closeOverlay(context);
                       },
-                      child: Text('Submit'),
+                      child: const Text('Submit'),
                     ),
                   ],
                 ),

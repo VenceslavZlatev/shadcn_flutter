@@ -227,6 +227,8 @@ class DocsPageState extends State<DocsPage> {
         ShadcnDocsPage(
             'File Picker', 'file_picker', ShadcnFeatureTag.workInProgress),
         ShadcnDocsPage('Form', 'form'),
+        ShadcnDocsPage(
+            'Formatted Input', 'formatted_input', ShadcnFeatureTag.newFeature),
         // TODO: Image Input (with cropper and rotate tool, upload from file or take photo from camera)
         // ShadcnDocsPage(
         // 'Image Input', 'image_input', ShadcnFeatureTag.workInProgress),
@@ -253,6 +255,8 @@ class DocsPageState extends State<DocsPage> {
         ShadcnDocsPage('Time Picker', 'time_picker'),
         ShadcnDocsPage('Toggle', 'toggle'),
         ShadcnDocsPage('Multi Select', 'multiselect'),
+        ShadcnDocsPage(
+            'Item Picker', 'item_picker', ShadcnFeatureTag.newFeature),
       ],
     ),
     ShadcnDocsSection(
@@ -282,13 +286,12 @@ class DocsPageState extends State<DocsPage> {
         ShadcnDocsPage('Tabs', 'tabs'),
         ShadcnDocsPage('Tab List', 'tab_list'),
         // TODO: like a chrome tab, complete with its view
-        ShadcnDocsPage('Tab Pane', 'tab_pane', ShadcnFeatureTag.newFeature),
+        ShadcnDocsPage('Tab Pane', 'tab_pane'),
         ShadcnDocsPage('Tree', 'tree'),
         // aka Bottom Navigation Bar
         ShadcnDocsPage('Navigation Bar', 'navigation_bar'),
         ShadcnDocsPage('Navigation Rail', 'navigation_rail'),
-        ShadcnDocsPage('Expandable Sidebar', 'expandable_sidebar',
-            ShadcnFeatureTag.newFeature),
+        ShadcnDocsPage('Expandable Sidebar', 'expandable_sidebar'),
         // aka Drawer
         ShadcnDocsPage('Navigation Sidebar', 'navigation_sidebar'),
         ShadcnDocsPage('Dot Indicator', 'dot_indicator'),
@@ -302,6 +305,7 @@ class DocsPageState extends State<DocsPage> {
         ShadcnDocsPage('Hover Card', 'hover_card'),
         ShadcnDocsPage('Popover', 'popover'),
         ShadcnDocsPage('Sheet', 'sheet'),
+        ShadcnDocsPage('Swiper', 'swiper', ShadcnFeatureTag.newFeature),
         ShadcnDocsPage('Tooltip', 'tooltip'),
         // TODO: window as in like a window in desktop
         ShadcnDocsPage('Window', 'window', ShadcnFeatureTag.experimental),
@@ -440,6 +444,72 @@ class DocsPageState extends State<DocsPage> {
     );
   }
 
+  Widget buildFlavorTag() {
+    String text = 'UKNOWN';
+    Color color = Colors.green;
+    switch (flavor) {
+      case 'local':
+        text = 'Local';
+        color = Colors.red;
+        break;
+      case 'experimental':
+        text = 'Experimental';
+        color = Colors.orange;
+        break;
+      case 'release':
+        text = getReleaseTagName();
+        color = Colors.green;
+        break;
+    }
+    return Builder(builder: (context) {
+      return PrimaryBadge(
+        onPressed: () {
+          showDropdown(
+            context: context,
+            offset: const Offset(0, 8) * Theme.of(context).scaling,
+            builder: (context) {
+              return DropdownMenu(
+                children: [
+                  MenuButton(
+                    child: Text(getReleaseTagName()),
+                    onPressed: (context) {
+                      launchUrlString(
+                          'https://sunarya-thito.github.io/shadcn_flutter/');
+                    },
+                  ),
+                  MenuButton(
+                    child: const Text('Experimental'),
+                    onPressed: (context) {
+                      launchUrlString(
+                          'https://sunarya-thito.github.io/shadcn_flutter/experimental/');
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        style: const ButtonStyle.primary(
+          density: ButtonDensity.dense,
+          size: ButtonSize.small,
+        ).copyWith(
+          decoration: (context, states, value) {
+            return (value as BoxDecoration).copyWith(
+              color: color,
+            );
+          },
+          textStyle: (context, states, value) {
+            return value.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            );
+          },
+        ),
+        child: Text(text),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, OnThisPage> onThisPage = widget.onThisPage;
@@ -575,46 +645,56 @@ class DocsPageState extends State<DocsPage> {
                     Expanded(
                       child: FocusTraversalGroup(
                         child: widget.scrollable
-                            ? SingleChildScrollView(
-                                controller: scrollController,
-                                clipBehavior: Clip.none,
-                                padding: !hasOnThisPage
-                                    ? const EdgeInsets.symmetric(
-                                          horizontal: 40,
-                                          vertical: 32,
-                                        ).copyWith(
-                                          right: padding.right + 32,
-                                        ) *
-                                        theme.scaling
-                                    : const EdgeInsets.symmetric(
-                                          horizontal: 40,
-                                          vertical: 32,
-                                        ).copyWith(right: 24) *
-                                        theme.scaling,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Breadcrumb(
-                                      separator: Breadcrumb.arrowSeparator,
+                            ? Builder(builder: (context) {
+                                var mq = MediaQuery.of(context);
+                                return SingleChildScrollView(
+                                  controller: scrollController,
+                                  clipBehavior: Clip.none,
+                                  padding: !hasOnThisPage
+                                      ? const EdgeInsets.symmetric(
+                                                horizontal: 40,
+                                                vertical: 32,
+                                              ).copyWith(
+                                                right: padding.right + 32,
+                                              ) *
+                                              theme.scaling +
+                                          mq.padding
+                                      : const EdgeInsets.symmetric(
+                                                horizontal: 40,
+                                                vertical: 32,
+                                              ).copyWith(right: 24) *
+                                              theme.scaling +
+                                          mq.padding,
+                                  child: MediaQuery(
+                                    data: mq.copyWith(
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
                                       children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            context.goNamed('introduction');
-                                          },
-                                          density: ButtonDensity.compact,
-                                          child: const Text('Docs'),
+                                        Breadcrumb(
+                                          separator: Breadcrumb.arrowSeparator,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                context.goNamed('introduction');
+                                              },
+                                              density: ButtonDensity.compact,
+                                              child: const Text('Docs'),
+                                            ),
+                                            ...widget.navigationItems,
+                                            if (page != null) Text(page.title),
+                                          ],
                                         ),
-                                        ...widget.navigationItems,
-                                        if (page != null) Text(page.title),
+                                        Gap(16 * theme.scaling),
+                                        widget.child,
                                       ],
                                     ),
-                                    Gap(16 * theme.scaling),
-                                    widget.child,
-                                  ],
-                                ),
-                              )
+                                  ),
+                                );
+                              })
                             : Container(
                                 clipBehavior: Clip.none,
                                 padding: !hasOnThisPage
@@ -696,9 +776,17 @@ class DocsPageState extends State<DocsPage> {
         leading: FlutterLogo(
           size: 32 * theme.scaling,
         ),
-        content: const Text(
-          'shadcn_flutter',
-        ).textLarge().mono(),
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text(
+              'shadcn_flutter',
+            ).textLarge().mono(),
+            Gap(16 * theme.scaling),
+            buildFlavorTag(),
+          ],
+        ),
       ),
       trailing: [
         Align(
@@ -759,6 +847,7 @@ class DocsPageState extends State<DocsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   FlutterLogo(
                     size: 24 * scaling,
@@ -766,7 +855,10 @@ class DocsPageState extends State<DocsPage> {
                   Gap(18 * scaling),
                   const Text(
                     'shadcn_flutter',
-                  ).medium().mono().expanded(),
+                  ).medium().mono(),
+                  Gap(12 * scaling),
+                  buildFlavorTag(),
+                  const Spacer(),
                   TextButton(
                     density: ButtonDensity.icon,
                     size: ButtonSize.small,
@@ -841,7 +933,6 @@ class DocsPageState extends State<DocsPage> {
 
 class _DocsSidebar extends StatefulWidget {
   const _DocsSidebar({
-    super.key,
     required this.sections,
     required this.pageName,
   });
@@ -879,7 +970,6 @@ class _DocsSecondarySidebar extends StatefulWidget {
   final EdgeInsets padding;
 
   const _DocsSecondarySidebar({
-    super.key,
     required this.onThisPage,
     required this.isVisible,
     required this.padding,
@@ -936,7 +1026,6 @@ class _DocsSecondarySidebarState extends State<_DocsSecondarySidebar> {
 
 class _DocsSidebarSection extends StatefulWidget {
   const _DocsSidebarSection({
-    super.key,
     required this.section,
     required this.pageName,
   });
@@ -973,7 +1062,6 @@ class _DocsSidebarSectionState extends State<_DocsSidebarSection> {
 
 class _DocsSidebarButton extends StatefulWidget {
   const _DocsSidebarButton({
-    super.key,
     required this.page,
     required this.pageName,
   });
