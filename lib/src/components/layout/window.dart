@@ -1,9 +1,42 @@
 import 'dart:collection';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:shadcn_flutter/src/components/layout/group.dart';
 import 'package:shadcn_flutter/src/components/patch.dart';
+
+class WindowTheme {
+  final double? titleBarHeight;
+  final double? resizeThickness;
+
+  const WindowTheme({this.titleBarHeight, this.resizeThickness});
+
+  WindowTheme copyWith({
+    ValueGetter<double?>? titleBarHeight,
+    ValueGetter<double?>? resizeThickness,
+  }) {
+    return WindowTheme(
+      titleBarHeight:
+          titleBarHeight == null ? this.titleBarHeight : titleBarHeight(),
+      resizeThickness:
+          resizeThickness == null ? this.resizeThickness : resizeThickness(),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is WindowTheme &&
+      other.titleBarHeight == titleBarHeight &&
+      other.resizeThickness == resizeThickness;
+
+  @override
+  int get hashCode => Object.hash(titleBarHeight, resizeThickness);
+
+  @override
+  String toString() =>
+      'WindowTheme(titleBarHeight: $titleBarHeight, resizeThickness: $resizeThickness)';
+}
 
 class WindowSnapStrategy {
   final Rect relativeBounds;
@@ -95,28 +128,29 @@ class WindowState {
   }
 
   WindowState copyWith({
-    Rect? bounds,
-    bool? minimized,
-    bool? alwaysOnTop,
-    bool? closable,
-    bool? resizable,
-    bool? draggable,
-    bool? maximizable,
-    bool? minimizable,
-    bool? enableSnapping,
-    BoxConstraints? constraints,
+    ValueGetter<Rect>? bounds,
+    ValueGetter<bool>? minimized,
+    ValueGetter<bool>? alwaysOnTop,
+    ValueGetter<bool>? closable,
+    ValueGetter<bool>? resizable,
+    ValueGetter<bool>? draggable,
+    ValueGetter<bool>? maximizable,
+    ValueGetter<bool>? minimizable,
+    ValueGetter<bool>? enableSnapping,
+    ValueGetter<BoxConstraints>? constraints,
   }) {
     return WindowState(
-      bounds: bounds ?? this.bounds,
-      minimized: minimized ?? this.minimized,
-      alwaysOnTop: alwaysOnTop ?? this.alwaysOnTop,
-      closable: closable ?? this.closable,
-      resizable: resizable ?? this.resizable,
-      draggable: draggable ?? this.draggable,
-      maximizable: maximizable ?? this.maximizable,
-      minimizable: minimizable ?? this.minimizable,
-      enableSnapping: enableSnapping ?? this.enableSnapping,
-      constraints: constraints ?? this.constraints,
+      bounds: bounds == null ? this.bounds : bounds(),
+      minimized: minimized == null ? this.minimized : minimized(),
+      alwaysOnTop: alwaysOnTop == null ? this.alwaysOnTop : alwaysOnTop(),
+      closable: closable == null ? this.closable : closable(),
+      resizable: resizable == null ? this.resizable : resizable(),
+      draggable: draggable == null ? this.draggable : draggable(),
+      maximizable: maximizable == null ? this.maximizable : maximizable(),
+      minimizable: minimizable == null ? this.minimizable : minimizable(),
+      enableSnapping:
+          enableSnapping == null ? this.enableSnapping : enableSnapping(),
+      constraints: constraints == null ? this.constraints : constraints(),
     );
   }
 }
@@ -159,7 +193,7 @@ class WindowController extends ValueNotifier<WindowState> {
   Rect get bounds => value.bounds;
   set bounds(Rect value) {
     if (value == bounds) return;
-    this.value = this.value.copyWith(bounds: value);
+    this.value = this.value.copyWith(bounds: () => value);
   }
 
   Rect? get maximized => value.maximized;
@@ -171,55 +205,55 @@ class WindowController extends ValueNotifier<WindowState> {
   bool get minimized => value.minimized;
   set minimized(bool value) {
     if (value == minimized) return;
-    this.value = this.value.copyWith(minimized: value);
+    this.value = this.value.copyWith(minimized: () => value);
   }
 
   bool get alwaysOnTop => value.alwaysOnTop;
   set alwaysOnTop(bool value) {
     if (value == alwaysOnTop) return;
-    this.value = this.value.copyWith(alwaysOnTop: value);
+    this.value = this.value.copyWith(alwaysOnTop: () => value);
   }
 
   bool get closable => value.closable;
   set closable(bool value) {
     if (value == closable) return;
-    this.value = this.value.copyWith(closable: value);
+    this.value = this.value.copyWith(closable: () => value);
   }
 
   bool get resizable => value.resizable;
   set resizable(bool value) {
     if (value == resizable) return;
-    this.value = this.value.copyWith(resizable: value);
+    this.value = this.value.copyWith(resizable: () => value);
   }
 
   bool get draggable => value.draggable;
   set draggable(bool value) {
     if (value == draggable) return;
-    this.value = this.value.copyWith(draggable: value);
+    this.value = this.value.copyWith(draggable: () => value);
   }
 
   bool get maximizable => value.maximizable;
   set maximizable(bool value) {
     if (value == maximizable) return;
-    this.value = this.value.copyWith(maximizable: value);
+    this.value = this.value.copyWith(maximizable: () => value);
   }
 
   bool get minimizable => value.minimizable;
   set minimizable(bool value) {
     if (value == minimizable) return;
-    this.value = this.value.copyWith(minimizable: value);
+    this.value = this.value.copyWith(minimizable: () => value);
   }
 
   bool get enableSnapping => value.enableSnapping;
   set enableSnapping(bool value) {
     if (value == enableSnapping) return;
-    this.value = this.value.copyWith(enableSnapping: value);
+    this.value = this.value.copyWith(enableSnapping: () => value);
   }
 
   BoxConstraints get constraints => value.constraints;
   set constraints(BoxConstraints value) {
     if (value == constraints) return;
-    this.value = this.value.copyWith(constraints: value);
+    this.value = this.value.copyWith(constraints: () => value);
   }
 }
 
@@ -238,12 +272,16 @@ class WindowWidget extends StatefulWidget {
   final bool? minimized;
   final bool? enableSnapping;
   final BoxConstraints? constraints;
+  final double? titleBarHeight;
+  final double? resizeThickness;
 
   const WindowWidget({
     super.key,
     this.title,
     this.actions,
     this.content,
+    this.titleBarHeight,
+    this.resizeThickness,
     bool this.resizable = true,
     bool this.draggable = true,
     bool this.closable = true,
@@ -262,6 +300,8 @@ class WindowWidget extends StatefulWidget {
     this.actions,
     this.content,
     required WindowController this.controller,
+    this.titleBarHeight,
+    this.resizeThickness,
   })  : bounds = null,
         maximized = null,
         minimized = null,
@@ -289,6 +329,8 @@ class WindowWidget extends StatefulWidget {
     this.maximized,
     this.minimized,
     this.constraints,
+    this.titleBarHeight,
+    this.resizeThickness,
   });
 
   @override
@@ -434,7 +476,12 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
       child: ListenableBuilder(
         listenable: controller,
         builder: (context, child) {
-          var resizeThickness = 8;
+          final compTheme = ComponentTheme.maybeOf<WindowTheme>(context);
+          var resizeThickness =
+              widget.resizeThickness ?? compTheme?.resizeThickness ?? 8;
+          final titleBarHeight =
+              (widget.titleBarHeight ?? compTheme?.titleBarHeight ?? 32) *
+                  theme.scaling;
 
           Widget windowClient = Card(
             clipBehavior: Clip.antiAlias,
@@ -494,10 +541,8 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
                           if (layerRenderBox != null) {
                             Offset layerLocal = layerRenderBox
                                 .globalToLocal(details.globalPosition);
-                            Size titleSize = Size(
-                              this.bounds.width,
-                              32 * theme.scaling,
-                            );
+                            Size titleSize =
+                                Size(this.bounds.width, titleBarHeight);
                             this.bounds = Rect.fromLTWH(
                               layerLocal.dx - titleSize.width / 2,
                               layerLocal.dy - titleSize.height / 2,
@@ -536,7 +581,7 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
                         _dragAlignment = null;
                       },
                       child: Container(
-                        height: 32 * theme.scaling,
+                        height: titleBarHeight,
                         padding: EdgeInsets.all(
                           2 * theme.scaling,
                         ),
@@ -830,21 +875,21 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
   @override
   set alwaysOnTop(bool value) {
     if (value != state.alwaysOnTop) {
-      controller.value = state.copyWith(alwaysOnTop: value);
+      controller.value = state.copyWith(alwaysOnTop: () => value);
     }
   }
 
   @override
   set bounds(Rect value) {
     if (value != state.bounds) {
-      controller.value = state.copyWith(bounds: value);
+      controller.value = state.copyWith(bounds: () => value);
     }
   }
 
   @override
   set closable(bool value) {
     if (value != state.closable) {
-      controller.value = state.copyWith(closable: value);
+      controller.value = state.copyWith(closable: () => value);
     }
   }
 
@@ -856,14 +901,14 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
   @override
   set draggable(bool value) {
     if (value != state.draggable) {
-      controller.value = state.copyWith(draggable: value);
+      controller.value = state.copyWith(draggable: () => value);
     }
   }
 
   @override
   set enableSnapping(bool value) {
     if (value != state.enableSnapping) {
-      controller.value = state.copyWith(enableSnapping: value);
+      controller.value = state.copyWith(enableSnapping: () => value);
     }
   }
 
@@ -880,7 +925,7 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
   @override
   set maximizable(bool value) {
     if (value != state.maximizable) {
-      controller.value = state.copyWith(maximizable: value);
+      controller.value = state.copyWith(maximizable: () => value);
     }
   }
 
@@ -894,21 +939,21 @@ class _WindowWidgetState extends State<WindowWidget> with WindowHandle {
   @override
   set minimizable(bool value) {
     if (value != state.minimizable) {
-      controller.value = state.copyWith(minimizable: value);
+      controller.value = state.copyWith(minimizable: () => value);
     }
   }
 
   @override
   set minimized(bool value) {
     if (value != state.minimized) {
-      controller.value = state.copyWith(minimized: value);
+      controller.value = state.copyWith(minimized: () => value);
     }
   }
 
   @override
   set resizable(bool value) {
     if (value != state.resizable) {
-      controller.value = state.copyWith(resizable: value);
+      controller.value = state.copyWith(resizable: () => value);
     }
   }
 }
@@ -1552,6 +1597,9 @@ class _WindowNavigatorState extends State<WindowNavigator>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final compTheme = ComponentTheme.maybeOf<WindowTheme>(context);
+    final titleBarHeight =
+        (compTheme?.titleBarHeight ?? 32) * theme.scaling;
     return LayoutBuilder(builder: (context, constraints) {
       return ListenableBuilder(
           listenable: Listenable.merge([
@@ -1591,25 +1639,25 @@ class _WindowNavigatorState extends State<WindowNavigator>
                       top: 0,
                       left: 0,
                       right: 0,
-                      height: 32 * theme.scaling,
+                      height: titleBarHeight,
                       child: _createBorderSnapStrategy(const WindowSnapStrategy(
                         relativeBounds: Rect.fromLTWH(0, 0, 1, 1),
                         shouldMinifyWindow: false,
                       ))),
                   GroupPositioned(
-                      top: 32 * theme.scaling,
+                      top: titleBarHeight,
                       bottom: 0,
                       left: 0,
-                      width: 32 * theme.scaling,
+                      width: titleBarHeight,
                       child: _createBorderSnapStrategy(const WindowSnapStrategy(
                         relativeBounds: Rect.fromLTWH(0, 0, 0.5, 1),
                         shouldMinifyWindow: false,
                       ))),
                   GroupPositioned(
-                      top: 32 * theme.scaling,
+                      top: titleBarHeight,
                       bottom: 0,
                       right: 0,
-                      width: 32 * theme.scaling,
+                      width: titleBarHeight,
                       child: _createBorderSnapStrategy(const WindowSnapStrategy(
                         relativeBounds: Rect.fromLTWH(0.5, 0, 0.5, 1),
                         shouldMinifyWindow: false,

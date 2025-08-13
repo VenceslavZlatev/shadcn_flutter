@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:email_validator/email_validator.dart' as email_validator;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' as widgets;
+import 'package:shadcn_flutter/src/components/layout/focus_outline.dart';
 
 import '../../../shadcn_flutter.dart';
 
@@ -1000,6 +1001,8 @@ typedef DurationInputKey = FormKey<Duration>;
 typedef InputKey = FormKey<String>;
 typedef InputOTPKey = FormKey<List<int?>>;
 typedef MultiSelectKey<T> = FormKey<Iterable<T>>;
+typedef MultipleAnswerKey<T> = FormKey<Iterable<T>>;
+typedef MultipleChoiceKey<T> = FormKey<T>;
 typedef NumberInputKey = FormKey<num>;
 typedef PhoneInputKey = FormKey<PhoneNumber>;
 typedef RadioCardKey = FormKey<int>;
@@ -1064,7 +1067,7 @@ class FormEntryState extends State<FormEntry> with FormFieldHandle {
       _onControllerChanged();
       if (_cachedValue != null) {
         newController?.attach(
-            context, widget.key, _cachedValue, widget.validator);
+            context, widget.key, _cachedValue?.value, widget.validator);
       }
     }
   }
@@ -1107,6 +1110,7 @@ class FormEntryState extends State<FormEntry> with FormFieldHandle {
     bool isSameType = widget.key.type == T;
     if (!isSameType) {
       var parentLookup = Data.maybeFind<FormFieldHandle>(context);
+      assert(parentLookup != this, 'FormEntry cannot be its own parent');
       return parentLookup?.reportNewFormValue<T>(value);
     }
     var cachedValue = _cachedValue;
@@ -1169,6 +1173,7 @@ class _FormEntryHandleInterceptor with FormFieldHandle {
 
   @override
   FutureOr<ValidationResult?> reportNewFormValue<T>(T? value) {
+    onValueReported(value);
     return handle?.reportNewFormValue<T>(value);
   }
 
@@ -1750,46 +1755,64 @@ class FormField<T> extends StatelessWidget {
       child: FormEntryErrorBuilder(
         modes: showErrors,
         builder: (context, error, child) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: padding!,
-                child: Row(
-                  mainAxisAlignment: labelAxisAlignment!,
-                  children: [
-                    if (leadingLabel != null) leadingLabel!.textSmall().muted(),
-                    if (leadingLabel != null)
-                      Gap(leadingGap ?? theme.scaling * 8),
-                    Expanded(
-                      child: DefaultTextStyle.merge(
-                        style: error != null
-                            ? TextStyle(color: theme.colorScheme.destructive)
-                            : null,
-                        child: label.textSmall(),
-                      ),
-                    ),
-                    if (trailingLabel != null)
-                      Gap(trailingGap ?? theme.scaling * 8),
-                    if (trailingLabel != null)
-                      trailingLabel!.textSmall().muted(),
-                  ],
-                ),
+          return ComponentTheme(
+            data: FocusOutlineTheme(
+              border: error != null
+                  ? Border.all(
+                      color: theme.colorScheme.destructive.scaleAlpha(0.2),
+                      width: 3.0)
+                  : null,
+            ),
+            child: ComponentTheme(
+              data: TextFieldTheme(
+                border: error != null
+                    ? Border.all(color: theme.colorScheme.destructive)
+                    : null,
               ),
-              Gap(theme.scaling * 8),
-              child!,
-              if (hint != null) ...[
-                Gap(theme.scaling * 8),
-                hint!.xSmall().muted(),
-              ],
-              if (error is InvalidResult) ...[
-                Gap(theme.scaling * 8),
-                DefaultTextStyle.merge(
-                  style: TextStyle(color: theme.colorScheme.destructive),
-                  child: Text(error.message).xSmall().medium(),
-                ),
-              ],
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: padding!,
+                    child: Row(
+                      mainAxisAlignment: labelAxisAlignment!,
+                      children: [
+                        if (leadingLabel != null)
+                          leadingLabel!.textSmall().muted(),
+                        if (leadingLabel != null)
+                          Gap(leadingGap ?? theme.scaling * 8),
+                        Expanded(
+                          child: DefaultTextStyle.merge(
+                            style: error != null
+                                ? TextStyle(
+                                    color: theme.colorScheme.destructive)
+                                : null,
+                            child: label.textSmall(),
+                          ),
+                        ),
+                        if (trailingLabel != null)
+                          Gap(trailingGap ?? theme.scaling * 8),
+                        if (trailingLabel != null)
+                          trailingLabel!.textSmall().muted(),
+                      ],
+                    ),
+                  ),
+                  Gap(theme.scaling * 8),
+                  child!,
+                  if (hint != null) ...[
+                    Gap(theme.scaling * 8),
+                    hint!.xSmall().muted(),
+                  ],
+                  if (error is InvalidResult) ...[
+                    Gap(theme.scaling * 8),
+                    DefaultTextStyle.merge(
+                      style: TextStyle(color: theme.colorScheme.destructive),
+                      child: Text(error.message).xSmall().medium(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           );
         },
         child: child,
@@ -1904,26 +1927,45 @@ class FormTableLayout extends StatelessWidget {
                   child: FormEntryErrorBuilder(
                     modes: rows[i].showErrors,
                     builder: (context, error, child) {
-                      return IntrinsicWidth(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            child!,
-                            if (rows[i].hint != null) ...[
-                              Gap(8 * scaling),
-                              rows[i].hint!.xSmall().muted(),
-                            ],
-                            if (error is InvalidResult) ...[
-                              Gap(8 * scaling),
-                              DefaultTextStyle.merge(
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .destructive),
-                                child: Text(error.message).xSmall().medium(),
-                              ),
-                            ],
-                          ],
+                      return ComponentTheme(
+                        data: FocusOutlineTheme(
+                          border: error != null
+                              ? Border.all(
+                                  color: theme.colorScheme.destructive
+                                      .scaleAlpha(0.2),
+                                  width: 3.0)
+                              : null,
+                        ),
+                        child: ComponentTheme(
+                          data: TextFieldTheme(
+                            border: error != null
+                                ? Border.all(
+                                    color: theme.colorScheme.destructive)
+                                : null,
+                          ),
+                          child: IntrinsicWidth(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                child!,
+                                if (rows[i].hint != null) ...[
+                                  Gap(8 * scaling),
+                                  rows[i].hint!.xSmall().muted(),
+                                ],
+                                if (error is InvalidResult) ...[
+                                  Gap(8 * scaling),
+                                  DefaultTextStyle.merge(
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .destructive),
+                                    child:
+                                        Text(error.message).xSmall().medium(),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },
