@@ -61,6 +61,42 @@ Future<T?> showCommandDialog<T>({
   );
 }
 
+/// Interactive command palette with search functionality and dynamic results.
+///
+/// A powerful search and command interface that provides real-time filtering
+/// of commands or items based on user input. Features debounced search,
+/// keyboard navigation, and customizable result presentation.
+///
+/// ## Features
+///
+/// - **Real-time search**: Dynamic filtering with configurable debounce timing
+/// - **Keyboard navigation**: Full arrow key and Enter/Escape support
+/// - **Async data loading**: Stream-based results with loading and error states
+/// - **Customizable states**: Custom builders for empty, loading, and error states
+/// - **Auto-focus**: Optional automatic focus on the search input
+/// - **Accessibility**: Screen reader friendly with proper focus management
+///
+/// The command palette is commonly used for:
+/// - Quick action selection (Cmd+K style interfaces)
+/// - Searchable option lists
+/// - Dynamic content filtering
+/// - Command-driven workflows
+///
+/// Example:
+/// ```dart
+/// Command(
+///   autofocus: true,
+///   debounceDuration: Duration(milliseconds: 300),
+///   builder: (context, query) async* {
+///     final results = await searchService.search(query);
+///     yield results.map((item) => CommandItem(
+///       onSelected: () => handleCommand(item),
+///       child: Text(item.title),
+///     )).toList();
+///   },
+///   emptyBuilder: (context) => Text('No results found'),
+/// );
+/// ```
 class Command extends StatefulWidget {
   final bool autofocus;
   final CommandBuilder builder;
@@ -73,6 +109,39 @@ class Command extends StatefulWidget {
   final double? surfaceBlur;
   final Widget? searchPlaceholder;
 
+  /// Creates a [Command] palette.
+  ///
+  /// The [builder] function receives the current search query and should return
+  /// a stream of widgets representing the filtered results.
+  ///
+  /// Parameters:
+  /// - [builder] (CommandBuilder, required): async builder for search results
+  /// - [autofocus] (bool, default: true): whether to auto-focus search input
+  /// - [debounceDuration] (Duration, default: 500ms): debounce delay for search
+  /// - [emptyBuilder] (WidgetBuilder?, optional): custom widget for empty state
+  /// - [errorBuilder] (ErrorWidgetBuilder?, optional): custom error display
+  /// - [loadingBuilder] (WidgetBuilder?, optional): custom loading indicator
+  /// - [surfaceOpacity] (double?, optional): surface opacity override
+  /// - [surfaceBlur] (double?, optional): surface blur override
+  /// - [searchPlaceholder] (Widget?, optional): placeholder text for search input
+  ///
+  /// Example:
+  /// ```dart
+  /// Command(
+  ///   autofocus: false,
+  ///   debounceDuration: Duration(milliseconds: 200),
+  ///   searchPlaceholder: Text('Search commands...'),
+  ///   builder: (context, query) async* {
+  ///     final filtered = commands.where((cmd) => 
+  ///       cmd.name.toLowerCase().contains(query?.toLowerCase() ?? '')
+  ///     );
+  ///     yield filtered.map((cmd) => CommandItem(
+  ///       child: Text(cmd.name),
+  ///       onSelected: () => cmd.execute(),
+  ///     )).toList();
+  ///   },
+  /// )
+  /// ```
   const Command({
     super.key,
     required this.builder,
@@ -102,93 +171,8 @@ class _CommandState extends State<Command> {
   late _Query _currentRequest;
 
   int requestCount = 0;
-  final List<_CommandItemState> _attached = [];
-  _CommandItemState? _currentItem;
-  bool _disposed = false;
-
-  bool _attach(_CommandItemState item) {
-    _attached.add(item);
-    _currentItem ??= item;
-    return _currentItem == item;
-  }
-
-  void _detach(_CommandItemState item) {
-    if (_disposed) return;
-    _attached.remove(item);
-    if (_currentItem == item) {
-      _currentItem = null;
-    }
-  }
-
-  void _next() {
-    if (!context.mounted) return;
-    if (_currentItem != null) {
-      RenderBox currentBox =
-          _currentItem!.context.findRenderObject() as RenderBox;
-      RenderBox parentBox = context.findRenderObject() as RenderBox;
-      Offset currentOffset =
-          currentBox.localToGlobal(Offset.zero, ancestor: parentBox);
-      (_CommandItemState, double)? nearestNextItem;
-      for (var item in _attached) {
-        if (item == _currentItem) continue;
-        RenderBox box = item.context.findRenderObject() as RenderBox;
-        Offset offset = box.localToGlobal(Offset.zero, ancestor: parentBox);
-        double distance = offset.dy - currentOffset.dy;
-        if (distance < 0) continue;
-        if (nearestNextItem == null || distance < nearestNextItem.$2) {
-          nearestNextItem = (item, distance);
-        }
-      }
-      if (nearestNextItem != null) {
-        _setCurrentItem(nearestNextItem.$1, true);
-      }
-    }
-  }
-
-  void _previous() {
-    if (!context.mounted) return;
-    if (_currentItem != null) {
-      RenderBox currentBox =
-          _currentItem!.context.findRenderObject() as RenderBox;
-      RenderBox parentBox = context.findRenderObject() as RenderBox;
-      Offset currentOffset =
-          currentBox.localToGlobal(Offset.zero, ancestor: parentBox);
-      (_CommandItemState, double)? nearestPrevItem;
-      for (var item in _attached) {
-        if (item == _currentItem) continue;
-        RenderBox box = item.context.findRenderObject() as RenderBox;
-        Offset offset = box.localToGlobal(Offset.zero, ancestor: parentBox);
-        double distance = currentOffset.dy - offset.dy;
-        if (distance < 0) continue;
-        if (nearestPrevItem == null || distance < nearestPrevItem.$2) {
-          nearestPrevItem = (item, distance);
-        }
-      }
-      if (nearestPrevItem != null) {
-        _setCurrentItem(nearestPrevItem.$1, false);
-      }
-    }
-  }
-
-  void _setCurrentItem(_CommandItemState item, bool? forward) {
-    final currentItem = _currentItem;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      currentItem?.focus(false);
-      item.focus(true);
-      Scrollable.ensureVisible(
-        item.context,
-        alignmentPolicy: forward == null
-            ? ScrollPositionAlignmentPolicy.explicit
-            : forward
-                ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
-                : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
-      );
-    });
-    _currentItem = item;
-  }
 
   Stream<List<Widget>> _request(BuildContext context, String? query) async* {
-    _currentItem = null;
     int currentRequest = ++requestCount;
     yield [];
     await Future.delayed(widget.debounceDuration);
@@ -219,35 +203,28 @@ class _CommandState extends State<Command> {
   }
 
   @override
-  void dispose() {
-    _disposed = true;
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     bool canPop = Navigator.of(context).canPop();
     final localization = ShadcnLocalizations.of(context);
-    return Data.inherit(
-      data: this,
-      child: Actions(
+    return SubFocusScope(builder: (context, state) {
+      return Actions(
         actions: {
           NextItemIntent: CallbackAction<NextItemIntent>(
             onInvoke: (intent) {
-              _next();
+              state.nextFocus();
               return null;
             },
           ),
           PreviousItemIntent: CallbackAction<PreviousItemIntent>(
             onInvoke: (intent) {
-              _previous();
+              state.nextFocus(TraversalDirection.up);
               return null;
             },
           ),
           ActivateIntent: CallbackAction<ActivateIntent>(
             onInvoke: (intent) {
-              _currentItem?.select();
+              state.invokeActionOnFocused(intent);
               return null;
             },
           ),
@@ -373,8 +350,8 @@ class _CommandState extends State<Command> {
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -427,87 +404,68 @@ class CommandItem extends StatefulWidget {
 }
 
 class _CommandItemState extends State<CommandItem> {
-  bool _hasFocus = false;
-  _CommandState? _state;
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    var newState = Data.maybeOf<_CommandState>(context);
-    if (_state != newState) {
-      _state?._detach(this);
-      _state = newState;
-      _hasFocus = _state?._attach(this) ?? false;
-    }
-  }
-
-  void focus(bool focus) {
-    setState(() {
-      _hasFocus = focus;
-    });
-  }
-
-  void select() {
-    widget.onTap?.call();
-  }
-
-  @override
-  void dispose() {
-    _state?._detach(this);
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     var themeData = Theme.of(context);
-    return Clickable(
-      onPressed: widget.onTap,
-      onHover: (hovered) {
-        setState(() {
-          if (hovered) {
-            _state?._currentItem?.focus(false);
-            _state?._currentItem = this;
-            _hasFocus = true;
-          }
-        });
+    return Actions(
+      actions: {
+        ActivateIntent: CallbackAction<Intent>(
+          onInvoke: (intent) {
+            widget.onTap?.call();
+            return null;
+          },
+        ),
       },
-      child: AnimatedContainer(
-        duration: kDefaultDuration,
-        decoration: BoxDecoration(
-          color: _hasFocus
-              ? themeData.colorScheme.accent
-              : themeData.colorScheme.accent.withValues(alpha: 0),
-          borderRadius: BorderRadius.circular(themeData.radiusSm),
-        ),
-        padding: EdgeInsets.symmetric(
-            horizontal: themeData.scaling * 8, vertical: themeData.scaling * 6),
-        child: IconTheme(
-          data: themeData.iconTheme.small.copyWith(
-            color: widget.onTap != null
-                ? themeData.colorScheme.accentForeground
-                : themeData.colorScheme.accentForeground.scaleAlpha(0.5),
-          ),
-          child: DefaultTextStyle(
-            style: TextStyle(
-              color: widget.onTap != null
-                  ? themeData.colorScheme.accentForeground
-                  : themeData.colorScheme.accentForeground.scaleAlpha(0.5),
+      child: SubFocus(
+        builder: (context, state) {
+          return Clickable(
+            onPressed: widget.onTap,
+            onHover: (hovered) {
+              setState(() {
+                if (hovered) {
+                  state.requestFocus();
+                }
+              });
+            },
+            child: AnimatedContainer(
+              duration: kDefaultDuration,
+              decoration: BoxDecoration(
+                color: state.isFocused
+                    ? themeData.colorScheme.accent
+                    : themeData.colorScheme.accent.withValues(alpha: 0),
+                borderRadius: BorderRadius.circular(themeData.radiusSm),
+              ),
+              padding: EdgeInsets.symmetric(
+                  horizontal: themeData.scaling * 8,
+                  vertical: themeData.scaling * 6),
+              child: IconTheme(
+                data: themeData.iconTheme.small.copyWith(
+                  color: widget.onTap != null
+                      ? themeData.colorScheme.accentForeground
+                      : themeData.colorScheme.accentForeground.scaleAlpha(0.5),
+                ),
+                child: DefaultTextStyle(
+                  style: TextStyle(
+                    color: widget.onTap != null
+                        ? themeData.colorScheme.accentForeground
+                        : themeData.colorScheme.accentForeground
+                            .scaleAlpha(0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      if (widget.leading != null) widget.leading!,
+                      if (widget.leading != null) Gap(themeData.scaling * 8),
+                      Expanded(child: widget.title),
+                      if (widget.trailing != null) Gap(themeData.scaling * 8),
+                      if (widget.trailing != null)
+                        widget.trailing!.muted().xSmall(),
+                    ],
+                  ).small(),
+                ),
+              ),
             ),
-            child: Row(
-              children: [
-                if (widget.leading != null) widget.leading!,
-                if (widget.leading != null) Gap(themeData.scaling * 8),
-                Expanded(child: widget.title),
-                if (widget.trailing != null) Gap(themeData.scaling * 8),
-                if (widget.trailing != null) widget.trailing!.muted().xSmall(),
-              ],
-            ).small(),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

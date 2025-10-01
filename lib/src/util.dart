@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 typedef Predicate<T> = bool Function(T value);
@@ -1147,5 +1146,19 @@ extension TextEditingValueExtension on TextEditingValue {
       text: newText,
       selection: selection,
     );
+  }
+}
+
+typedef OnContextedCallback<T extends Intent> = Object? Function(T intent,
+    [BuildContext? context]);
+
+class ContextCallbackAction<T extends Intent> extends ContextAction<T> {
+  final OnContextedCallback<T> onInvoke;
+
+  ContextCallbackAction({required this.onInvoke});
+
+  @override
+  Object? invoke(T intent, [BuildContext? context]) {
+    return onInvoke(intent, context);
   }
 }

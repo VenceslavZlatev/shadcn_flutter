@@ -296,6 +296,8 @@ class DocsPageState extends State<DocsPage> {
         // aka Drawer
         ShadcnDocsPage('Navigation Sidebar', 'navigation_sidebar'),
         ShadcnDocsPage('Dot Indicator', 'dot_indicator'),
+        //
+        ShadcnDocsPage('Switcher', 'switcher', ShadcnFeatureTag.experimental),
       ],
     ),
     ShadcnDocsSection(
@@ -567,17 +569,23 @@ class DocsPageState extends State<DocsPage> {
                                 ),
                               ],
                               trailing: [
-                                GhostButton(
-                                  density: ButtonDensity.icon,
-                                  onPressed: () {
-                                    openInNewTab(
-                                        'https://github.com/sunarya-thito/shadcn_flutter');
-                                  },
-                                  child: FaIcon(
-                                    FontAwesomeIcons.github,
-                                    color:
-                                        theme.colorScheme.secondaryForeground,
-                                  ).iconLarge(),
+                                Semantics(
+                                  link: true,
+                                  linkUrl: Uri.tryParse(
+                                    'https://github.com/sunarya-thito/shadcn_flutter',
+                                  ),
+                                  child: GhostButton(
+                                    density: ButtonDensity.icon,
+                                    onPressed: () {
+                                      openInNewTab(
+                                          'https://github.com/sunarya-thito/shadcn_flutter');
+                                    },
+                                    child: FaIcon(
+                                      FontAwesomeIcons.github,
+                                      color:
+                                          theme.colorScheme.secondaryForeground,
+                                    ).iconLarge(),
+                                  ),
                                 ),
                                 // pub.dev icon
                                 GhostButton(
@@ -922,37 +930,44 @@ class DocsPageState extends State<DocsPage> {
                           header: Text(section.title),
                           children: [
                             for (var page in section.pages)
-                              DocsNavigationButton(
-                                onPressed: () {
-                                  if (page.tag ==
-                                      ShadcnFeatureTag.workInProgress) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return AlertDialog(
-                                          title: const Text('Work in Progress'),
-                                          content: const Text(
-                                              'This page is still under development. Please come back later.'),
-                                          actions: [
-                                            PrimaryButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: const Text('Close')),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                    return;
-                                  }
-                                  context.goNamed(page.name);
-                                },
-                                selected: page.name == widget.name,
-                                child: Basic(
-                                  trailing: page.tag?.buildBadge(context),
-                                  trailingAlignment:
-                                      AlignmentDirectional.centerStart,
-                                  content: Text(page.title),
+                              Semantics(
+                                link: true,
+                                linkUrl: Uri.tryParse(
+                                  'https://sunarya-thito.github.io/shadcn_flutter${_goRouterNamedLocation(context, page.name)}',
+                                ),
+                                child: DocsNavigationButton(
+                                  onPressed: () {
+                                    if (page.tag ==
+                                        ShadcnFeatureTag.workInProgress) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title:
+                                                const Text('Work in Progress'),
+                                            content: const Text(
+                                                'This page is still under development. Please come back later.'),
+                                            actions: [
+                                              PrimaryButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Close')),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                      return;
+                                    }
+                                    context.goNamed(page.name);
+                                  },
+                                  selected: page.name == widget.name,
+                                  child: Basic(
+                                    trailing: page.tag?.buildBadge(context),
+                                    trailingAlignment:
+                                        AlignmentDirectional.centerStart,
+                                    content: Text(page.title),
+                                  ),
                                 ),
                               ),
                           ],
@@ -1116,19 +1131,33 @@ class _DocsSidebarButton extends StatefulWidget {
   State<_DocsSidebarButton> createState() => _DocsSidebarButtonState();
 }
 
+String? _goRouterNamedLocation(BuildContext context, String name) {
+  try {
+    return '/#${GoRouter.of(context).namedLocation(name)}';
+  } catch (e) {}
+  return '';
+}
+
 class _DocsSidebarButtonState extends State<_DocsSidebarButton> {
   @override
   Widget build(BuildContext context) {
-    return DocsNavigationButton(
-      onPressed: _onPressed,
-      selected: widget.page.name == widget.pageName,
-      trailing: DefaultTextStyle.merge(
-        style: const TextStyle(
-          decoration: TextDecoration.none,
-        ),
-        child: widget.page.tag?.buildBadge(context) ?? const SizedBox(),
+    return Semantics(
+      link: true,
+      label: widget.page.title,
+      linkUrl: Uri.tryParse(
+        'https://sunarya-thito.github.io/shadcn_flutter${_goRouterNamedLocation(context, widget.page.name)}',
       ),
-      child: Text(widget.page.title),
+      child: DocsNavigationButton(
+        onPressed: _onPressed,
+        selected: widget.page.name == widget.pageName,
+        trailing: DefaultTextStyle.merge(
+          style: const TextStyle(
+            decoration: TextDecoration.none,
+          ),
+          child: widget.page.tag?.buildBadge(context) ?? const SizedBox(),
+        ),
+        child: Text(widget.page.title),
+      ),
     );
   }
 
