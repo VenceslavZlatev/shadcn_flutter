@@ -458,11 +458,16 @@ class _SubFocusState extends State<SubFocus> with SubFocusState {
     if (!mounted || !_active) {
       return;
     }
-    setState(() {
-      if (focus) {
-        _focusCount++;
+    // Use SchedulerBinding to ensure setState is called at the right time
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          if (focus) {
+            _focusCount++;
+          }
+          _focused = focus;
+        });
       }
-      _focused = focus;
     });
   }
 
