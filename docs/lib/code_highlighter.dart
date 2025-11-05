@@ -24,10 +24,15 @@ class _CodeHighlighterState extends State<CodeHighlighter> {
   static final Map<Brightness, FutureOr<HighlighterTheme>> _initializedThemes =
       {};
 
+  static const Set<String> supportedLanguages = {'dart', 'yaml'};
+
   static FutureOr<bool> initializeLanguage(String mode) {
     final current = _initializedLanguages[mode];
     if (current != null) {
       return current;
+    }
+    if (!supportedLanguages.contains(mode)) {
+      return true;
     }
     final future = Highlighter.initialize([mode]).then((_) {
       _initializedLanguages[mode] = true;
@@ -67,6 +72,7 @@ class _CodeHighlighterState extends State<CodeHighlighter> {
           print(err);
           print(stackTrace);
         }
+        return Future.error(err, stackTrace);
       }),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
