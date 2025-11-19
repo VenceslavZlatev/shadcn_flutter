@@ -1192,8 +1192,6 @@ class _MenuGroupState extends State<MenuGroup> {
                     const ActivateIntent(),
                 const SingleActivator(LogicalKeyboardKey.space):
                     const ActivateIntent(),
-                const SingleActivator(LogicalKeyboardKey.backspace):
-                    const CloseMenuIntent(),
                 const SingleActivator(LogicalKeyboardKey.numpadEnter):
                     const ActivateIntent(),
               },

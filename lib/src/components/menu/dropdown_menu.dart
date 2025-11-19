@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 /// Shows a dropdown menu overlay at a specified position or anchored to a widget.
@@ -153,8 +154,7 @@ class DropdownMenuTheme {
     ValueGetter<double?>? surfaceBlur,
   }) {
     return DropdownMenuTheme(
-      surfaceOpacity:
-          surfaceOpacity == null ? this.surfaceOpacity : surfaceOpacity(),
+      surfaceOpacity: surfaceOpacity == null ? this.surfaceOpacity : surfaceOpacity(),
       surfaceBlur: surfaceBlur == null ? this.surfaceBlur : surfaceBlur(),
     );
   }
@@ -162,9 +162,7 @@ class DropdownMenuTheme {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is DropdownMenuTheme &&
-        other.surfaceOpacity == surfaceOpacity &&
-        other.surfaceBlur == surfaceBlur;
+    return other is DropdownMenuTheme && other.surfaceOpacity == surfaceOpacity && other.surfaceBlur == surfaceBlur;
   }
 
   @override
@@ -231,6 +229,15 @@ class DropdownMenu extends StatefulWidget {
   /// Each item should be a [MenuItem] or similar menu component.
   final List<MenuItem> children;
 
+  /// Focus node used to manage keyboard interactions.
+  final FocusNode? focusNode;
+
+  /// Whether the dropdown should request focus when built.
+  final bool autofocus;
+
+  /// Callback invoked for raw key events while the menu is focused.
+  final KeyEventResult Function(FocusNode node, KeyEvent event)? onKeyEvent;
+
   /// Creates a dropdown menu.
   ///
   /// Parameters:
@@ -242,6 +249,9 @@ class DropdownMenu extends StatefulWidget {
     this.surfaceOpacity,
     this.surfaceBlur,
     required this.children,
+    this.focusNode,
+    this.autofocus = false,
+    this.onKeyEvent,
   });
 
   @override
@@ -249,35 +259,49 @@ class DropdownMenu extends StatefulWidget {
 }
 
 class _DropdownMenuState extends State<DropdownMenu> {
+  FocusNode? _internalFocusNode;
+
+  FocusNode get _effectiveFocusNode =>
+      widget.focusNode ?? (_internalFocusNode ??= FocusNode(debugLabel: 'shadcn_dropdown_menu'));
+
+  @override
+  void dispose() {
+    _internalFocusNode?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSheetOverlay = SheetOverlayHandler.isSheetOverlay(context);
     final compTheme = ComponentTheme.maybeOf<DropdownMenuTheme>(context);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minWidth: 192,
-      ),
-      child: MenuGroup(
-        regionGroupId: Data.maybeOf<DropdownMenuData>(context)?.key,
-        subMenuOffset: const Offset(8, -4) * theme.scaling,
-        itemPadding: isSheetOverlay
-            ? const EdgeInsets.symmetric(horizontal: 8) * theme.scaling
-            : EdgeInsets.zero,
-        onDismissed: () {
-          closeOverlay(context);
-        },
-        direction: Axis.vertical,
-        builder: (context, children) {
-          return MenuPopup(
-            // does not need to check for theme.surfaceOpacity and theme.surfaceBlur
-            // MenuPopup already has default values for these properties
-            surfaceOpacity: widget.surfaceOpacity ?? compTheme?.surfaceOpacity,
-            surfaceBlur: widget.surfaceBlur ?? compTheme?.surfaceBlur,
-            children: children,
-          );
-        },
-        children: widget.children,
+    return Focus(
+      focusNode: _effectiveFocusNode,
+      autofocus: widget.autofocus,
+      onKeyEvent: widget.onKeyEvent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: 192,
+        ),
+        child: MenuGroup(
+          regionGroupId: Data.maybeOf<DropdownMenuData>(context)?.key,
+          subMenuOffset: const Offset(8, -4) * theme.scaling,
+          itemPadding: isSheetOverlay ? const EdgeInsets.symmetric(horizontal: 8) * theme.scaling : EdgeInsets.zero,
+          onDismissed: () {
+            closeOverlay(context);
+          },
+          direction: Axis.vertical,
+          builder: (context, children) {
+            return MenuPopup(
+              // does not need to check for theme.surfaceOpacity and theme.surfaceBlur
+              // MenuPopup already has default values for these properties
+              surfaceOpacity: widget.surfaceOpacity ?? compTheme?.surfaceOpacity,
+              surfaceBlur: widget.surfaceBlur ?? compTheme?.surfaceBlur,
+              children: children,
+            );
+          },
+          children: widget.children,
+        ),
       ),
     );
   }
