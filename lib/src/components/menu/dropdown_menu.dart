@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -291,6 +293,8 @@ class _DropdownMenuState extends State<DropdownMenu> {
             closeOverlay(context);
           },
           direction: Axis.vertical,
+          // Disable autofocus on mobile to prevent first item from appearing selected
+          autofocus: !(Platform.isAndroid || Platform.isIOS) && widget.autofocus,
           builder: (context, children) {
             return MenuPopup(
               // does not need to check for theme.surfaceOpacity and theme.surfaceBlur

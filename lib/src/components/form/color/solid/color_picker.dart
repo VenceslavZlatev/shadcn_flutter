@@ -225,6 +225,9 @@ class ColorPicker extends StatefulWidget {
   /// Size of the color sliders.
   final double? sliderSize;
 
+  /// Whether to show the color controls (buttons and input fields) below the picker.
+  final bool showControls;
+
   /// Creates a [ColorPicker] widget.
   const ColorPicker({
     super.key,
@@ -242,6 +245,7 @@ class ColorPicker extends StatefulWidget {
     this.sliderSize,
     this.showHistoryButton = true,
     this.initialShowHistory = false,
+    this.showControls = true,
   });
 
   @override
@@ -364,9 +368,8 @@ class _ColorPickerState extends State<ColorPicker> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: controlSpacing,
                     children: [
-                      if (orientation == Axis.vertical)
-                        ...buildSliders(context),
-                      colorControls,
+                      if (orientation == Axis.vertical) ...buildSliders(context),
+                      if (widget.showControls) colorControls,
                     ],
                   ),
                 ),
@@ -380,7 +383,7 @@ class _ColorPickerState extends State<ColorPicker> {
           spacing: spacing,
           children: [
             IntrinsicHeight(child: content),
-            colorControls,
+            if (widget.showControls) colorControls,
           ],
         ),
       );
