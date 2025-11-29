@@ -6,7 +6,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 /// [Tabs] widgets, including padding for the container and individual tabs,
 /// background colors, and border radius styling. These properties can be
 /// set at the theme level to provide consistent styling across the application.
-class TabsTheme {
+class TabsTheme extends ComponentThemeData {
   /// Padding around the entire tabs container.
   ///
   /// Defines the outer spacing for the tabs widget. If `null`,
@@ -138,6 +138,9 @@ class Tabs extends StatelessWidget {
   /// Must be between 0 and `children.length - 1` inclusive.
   final int index;
 
+  /// Used to expand children horizontally
+  final bool expand;
+
   /// Callback invoked when the user selects a different tab.
   ///
   /// Called with the new tab index when the user taps a tab header.
@@ -168,6 +171,7 @@ class Tabs extends StatelessWidget {
     required this.onChanged,
     required this.children,
     this.padding,
+    this.expand = false,
   });
 
   Widget _childBuilder(
@@ -242,9 +246,11 @@ class Tabs extends StatelessWidget {
           padding: containerPadding,
           child: IntrinsicHeight(
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
+              children: expand
+                  ? children.map((e) => Expanded(child: e)).toList()
+                  : children,
             ).muted(),
           ),
         );

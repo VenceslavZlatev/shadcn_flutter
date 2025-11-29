@@ -1,6 +1,6 @@
 name: shadcn_flutter
 description: "Beautifully designed components from Shadcn/UI is now available for Flutter"
-version: 0.0.47
+version: 0.0.48
 homepage: "https://github.com/sunarya-thito/shadcn_flutter"
 documentation: "https://sunarya-thito.github.io/shadcn_flutter/"
 repository: "https://github.com/sunarya-thito/shadcn_flutter"
@@ -14,6 +14,9 @@ dependencies:
   email_validator: ^3.0.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
   skeletonizer: ^2.1.0+1
   country_flags: ^4.1.0
   phonecodes: ^0.0.4
@@ -22,6 +25,7 @@ dependencies:
   data_widget: ^0.0.2
   gap: ^3.0.1
   expressions: ^0.2.5+2
+  animation_kit: ^0.0.2
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +37,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
   uses-material-design: true
   fonts:
   - family: RadixIcons

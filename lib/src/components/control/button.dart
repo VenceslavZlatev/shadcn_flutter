@@ -2027,7 +2027,7 @@ class ButtonStyle implements AbstractButtonStyle {
 ///
 /// Implementations include [PrimaryButtonTheme], [SecondaryButtonTheme],
 /// [OutlineButtonTheme], and others for each button variant.
-abstract class ButtonTheme {
+abstract class ButtonTheme extends ComponentThemeData {
   /// Optional decoration override (background, border, shadows).
   final ButtonStatePropertyDelegate<Decoration>? decoration;
 

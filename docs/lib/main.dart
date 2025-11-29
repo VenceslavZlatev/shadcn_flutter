@@ -14,6 +14,7 @@ import 'package:docs/pages/docs/components/avatar_group_example.dart';
 import 'package:docs/pages/docs/components/calendar_example.dart';
 import 'package:docs/pages/docs/components/card_image_example.dart';
 import 'package:docs/pages/docs/components/carousel_example.dart';
+import 'package:docs/pages/docs/components/chat_example.dart';
 import 'package:docs/pages/docs/components/chip_example.dart';
 import 'package:docs/pages/docs/components/chip_input_example.dart';
 import 'package:docs/pages/docs/components/context_menu_example.dart';
@@ -104,6 +105,7 @@ import 'pages/docs/components/collapsible_example.dart';
 import 'pages/docs/components/color_picker_example.dart';
 import 'pages/docs/components/command_example.dart';
 import 'pages/docs/components/form_example.dart';
+import 'pages/docs/components/go_router_app_example.dart';
 import 'pages/docs/components/number_input_example.dart';
 
 const kEnablePersistentPath = false;
@@ -776,10 +778,24 @@ class MyAppState extends State<MyApp> {
             },
           ),
           GoRoute(
+            path: 'go_router_app_example',
+            name: 'go_router_app_example',
+            builder: (context, state) {
+              return const GoRouterAppExample();
+            },
+          ),
+          GoRoute(
             path: 'wrapper',
             name: 'wrapper',
             builder: (context, state) {
               return const WrapperExample();
+            },
+          ),
+          GoRoute(
+            path: 'chat',
+            name: 'chat',
+            builder: (context, state) {
+              return const ChatExample();
             },
           ),
         ]),

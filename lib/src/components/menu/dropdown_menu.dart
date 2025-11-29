@@ -140,7 +140,7 @@ class DropdownMenuData {
 }
 
 /// Theme for [DropdownMenu].
-class DropdownMenuTheme {
+class DropdownMenuTheme extends ComponentThemeData {
   /// Surface opacity for the popup container.
   final double? surfaceOpacity;
 

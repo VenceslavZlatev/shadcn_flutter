@@ -5,7 +5,7 @@ import '../../../shadcn_flutter.dart';
 /// Defines default alignment, spacing, and padding properties for Basic
 /// layout components. These properties control how leading, trailing, title,
 /// subtitle, and content elements are positioned and spaced.
-class BasicTheme {
+class BasicTheme extends ComponentThemeData {
   /// Alignment for the leading widget.
   final AlignmentGeometry? leadingAlignment;
 
@@ -397,7 +397,7 @@ class BasicLayout extends StatelessWidget {
         widgetValue: this.contentAlignment,
         themeValue: compTheme?.contentAlignment,
         defaultValue: Alignment.topLeft);
-    return Row(
+    Widget child = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (leading != null)
@@ -450,6 +450,15 @@ class BasicLayout extends StatelessWidget {
           ),
       ],
     );
+
+    if (constraints != null) {
+      child = ConstrainedBox(
+        constraints: constraints!,
+        child: child,
+      );
+    }
+
+    return child;
   }
 }
 
