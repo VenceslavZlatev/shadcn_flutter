@@ -2009,8 +2009,16 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
                                                     listenable:
                                                         _scrollController,
                                                     builder: (context, child) {
+                                                      final hasSinglePosition =
+                                                          _scrollController
+                                                              .hasClients &&
+                                                          _scrollController
+                                                                  .positions
+                                                                  .length ==
+                                                              1;
                                                       return Visibility(
                                                         visible:
+                                                            hasSinglePosition &&
                                                             _scrollController
                                                                     .offset >
                                                                 0,
@@ -2027,6 +2035,9 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
                                                               milliseconds: 16,
                                                             ),
                                                             onHover: () {
+                                                              if (!hasSinglePosition) {
+                                                                return;
+                                                              }
                                                               // decrease scroll offset
                                                               var value =
                                                                   _scrollController
@@ -2066,9 +2077,15 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
                                                     listenable:
                                                         _scrollController,
                                                     builder: (context, child) {
+                                                      final hasSinglePosition =
+                                                          _scrollController
+                                                              .hasClients &&
+                                                          _scrollController
+                                                                  .positions
+                                                                  .length ==
+                                                              1;
                                                       return Visibility(
-                                                        visible: _scrollController
-                                                                .hasClients &&
+                                                        visible: hasSinglePosition &&
                                                             _scrollController
                                                                 .position
                                                                 .hasContentDimensions &&
@@ -2090,6 +2107,9 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
                                                               milliseconds: 16,
                                                             ),
                                                             onHover: () {
+                                                              if (!hasSinglePosition) {
+                                                                return;
+                                                              }
                                                               // increase scroll offset
                                                               var value =
                                                                   _scrollController
