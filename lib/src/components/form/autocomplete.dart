@@ -9,6 +9,12 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 /// modification of suggestions before they're applied.
 typedef AutoCompleteCompleter = String Function(String suggestion);
 
+/// Builds the visual content displayed for an autocomplete suggestion.
+typedef AutoCompleteSuggestionBuilder = Widget Function(
+  BuildContext context,
+  String suggestion,
+);
+
 /// Theme configuration for [AutoComplete] widget styling and behavior.
 ///
 /// Defines the visual appearance and positioning of the autocomplete popover
@@ -184,6 +190,17 @@ class AutoComplete extends StatefulWidget {
   /// formatting. Defaults to returning the suggestion unchanged.
   final AutoCompleteCompleter completer;
 
+  /// Builds the visual content for each suggestion.
+  ///
+  /// The original suggestion string is still used when the item is selected.
+  final AutoCompleteSuggestionBuilder? suggestionBuilder;
+
+  /// Button style used for suggestions that are not selected.
+  final AbstractButtonStyle suggestionStyle;
+
+  /// Button style used for the currently selected suggestion.
+  final AbstractButtonStyle selectedSuggestionStyle;
+
   /// Creates an [AutoComplete] widget.
   ///
   /// Wraps the provided [child] with autocomplete functionality using the
@@ -219,6 +236,9 @@ class AutoComplete extends StatefulWidget {
     this.popoverAlignment,
     this.mode,
     this.completer = _defaultCompleter,
+    this.suggestionBuilder,
+    this.suggestionStyle = const ButtonStyle.ghost(),
+    this.selectedSuggestionStyle = const ButtonStyle.secondary(),
   });
 
   @override
@@ -237,11 +257,17 @@ class _AutoCompleteItem extends StatefulWidget {
   final String suggestion;
   final bool selected;
   final VoidCallback onSelected;
+  final Widget child;
+  final AbstractButtonStyle style;
+  final AbstractButtonStyle selectedStyle;
 
   const _AutoCompleteItem({
     required this.suggestion,
     required this.selected,
     required this.onSelected,
+    required this.child,
+    required this.style,
+    required this.selectedStyle,
   });
 
   @override
@@ -254,10 +280,12 @@ class _AutoCompleteItemState extends State<_AutoCompleteItem> {
     return SelectedButton(
       value: widget.selected,
       alignment: AlignmentDirectional.centerStart,
+      style: widget.style,
+      selectedStyle: widget.selectedStyle,
       onChanged: (value) {
         widget.onSelected();
       },
-      child: Text(widget.suggestion),
+      child: widget.child,
     );
   }
 
@@ -363,6 +391,13 @@ class _AutoCompleteState extends State<AutoComplete> {
                                 _selectedIndex.value = index;
                                 _handleProceed();
                               },
+                              style: widget.suggestionStyle,
+                              selectedStyle: widget.selectedSuggestionStyle,
+                              child: widget.suggestionBuilder?.call(
+                                    context,
+                                    suggestion,
+                                  ) ??
+                                  Text(suggestion),
                             );
                           });
                     }),

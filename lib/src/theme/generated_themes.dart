@@ -157,7 +157,7 @@ class ColorSchemes {
   /// Dark defaultcolor color scheme.
   static const ColorScheme darkDefaultColor = ColorScheme(
     brightness: Brightness.dark,
-    background: Color(0xFF0A0A0A),
+    background: Color(0xFF191919),
     foreground: Color(0xFFFAFAFA),
     card: Color(0xFF171717),
     cardForeground: Color(0xFFFAFAFA),

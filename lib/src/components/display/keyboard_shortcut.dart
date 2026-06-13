@@ -94,6 +94,8 @@ class KeyboardShortcutDisplayMapper extends StatefulWidget {
       case LogicalKeyboardKey.metaLeft:
       case LogicalKeyboardKey.metaRight:
         return const Text('⌘');
+      case LogicalKeyboardKey.escape:
+        return const Text('Esc');
       case LogicalKeyboardKey.enter:
         return const Text('↵');
       case LogicalKeyboardKey.arrowLeft:
