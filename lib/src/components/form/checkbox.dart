@@ -685,7 +685,7 @@ class _CheckboxState extends State<Checkbox>
         mainAxisSize: MainAxisSize.max,
         children: [
           if (widget.leading != null) widget.leading!.small().medium(),
-          SizedBox(width: gap),
+          if (widget.leading != null) Gap(gap),
           AnimatedContainer(
             duration: kDefaultDuration,
             width: size,
@@ -751,7 +751,7 @@ class _CheckboxState extends State<Checkbox>
                     ),
                   ),
           ),
-          SizedBox(width: gap),
+          if (widget.trailing != null) Gap(gap),
           if (widget.trailing != null) widget.trailing!.small().medium(),
         ],
       ),

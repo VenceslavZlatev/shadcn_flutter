@@ -35,7 +35,7 @@ class CounterPage extends StatefulWidget {
 class CounterPageState extends State<CounterPage> {
   int _counter = 0;
 
-  int _selected = 0;
+  Key? _selected = const ValueKey(0);
 
   void _incrementCounter() {
     setState(() {
@@ -43,8 +43,9 @@ class CounterPageState extends State<CounterPage> {
     });
   }
 
-  NavigationItem _buildButton(String label, IconData icon) {
+  NavigationItem _buildButton(String label, IconData icon, Key key) {
     return NavigationItem(
+      key: key,
       label: Text(label),
       child: Icon(icon),
     );
@@ -58,45 +59,51 @@ class CounterPageState extends State<CounterPage> {
           title: const Text('Counter App'),
           subtitle: const Text('A simple counter app'),
           leading: [
-            GhostButton(
-              onPressed: () {
-                openDrawer(
-                  context: context,
-                  builder: (context) {
-                    return Container(
-                      alignment: Alignment.center,
-                      constraints: const BoxConstraints(
-                        maxWidth: 300,
-                      ),
-                      child: const Text('Drawer'),
-                    );
-                  },
-                  position: OverlayPosition.left,
-                );
-              },
-              density: ButtonDensity.icon,
-              child: const Icon(Icons.menu),
+            OverlayAnchor(
+              anchor: #menuDrawer,
+              child: GhostButton(
+                onPressed: () {
+                  openDrawer(
+                    anchor: #menuDrawer,
+                    builder: (context) {
+                      return Container(
+                        alignment: Alignment.center,
+                        constraints: const BoxConstraints(
+                          maxWidth: 300,
+                        ),
+                        child: const Text('Drawer'),
+                      );
+                    },
+                    position: OverlayPosition.left,
+                  );
+                },
+                density: ButtonDensity.icon,
+                child: const Icon(Icons.menu),
+              ),
             ),
           ],
           trailing: [
-            GhostButton(
-              density: ButtonDensity.icon,
-              onPressed: () {
-                openSheet(
-                  context: context,
-                  builder: (context) {
-                    return Container(
-                      alignment: Alignment.center,
-                      constraints: const BoxConstraints(
-                        maxWidth: 200,
-                      ),
-                      child: const Text('Sheet'),
-                    );
-                  },
-                  position: OverlayPosition.right,
-                );
-              },
-              child: const Icon(Icons.search),
+            OverlayAnchor(
+              anchor: #searchSheet,
+              child: GhostButton(
+                density: ButtonDensity.icon,
+                onPressed: () {
+                  openSheet(
+                    anchor: #searchSheet,
+                    builder: (context) {
+                      return Container(
+                        alignment: Alignment.center,
+                        constraints: const BoxConstraints(
+                          maxWidth: 200,
+                        ),
+                        child: const Text('Sheet'),
+                      );
+                    },
+                    position: OverlayPosition.right,
+                  );
+                },
+                child: const Icon(Icons.search),
+              ),
             ),
           ],
         ),
@@ -105,16 +112,16 @@ class CounterPageState extends State<CounterPage> {
       footers: [
         const Divider(),
         NavigationBar(
-          onSelected: (i) {
+          onSelected: (key) {
             setState(() {
-              _selected = i;
+              _selected = key;
             });
           },
-          index: _selected,
+          selectedKey: _selected,
           children: [
-            _buildButton('Home', Icons.home),
-            _buildButton('Explore', Icons.explore),
-            _buildButton('Library', Icons.library_music),
+            _buildButton('Home', Icons.home, const ValueKey(0)),
+            _buildButton('Explore', Icons.explore, const ValueKey(1)),
+            _buildButton('Library', Icons.library_music, const ValueKey(2)),
           ],
         ),
       ],

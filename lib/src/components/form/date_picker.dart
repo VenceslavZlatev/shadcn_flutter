@@ -217,7 +217,7 @@ class ControlledDatePicker extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    return ControlledComponentAdapter(
+    return ControlledComponentAdapter<DateTime?>(
       controller: controller,
       initialValue: initialValue,
       onChanged: onChanged,
@@ -327,7 +327,7 @@ class DatePicker extends StatelessWidget {
     final resolvedInitialView = styleValue(
       widgetValue: initialView,
       themeValue: compTheme?.initialView,
-      defaultValue: CalendarView.now(),
+      defaultValue: null,
     );
     final resolvedInitialViewType = styleValue(
       widgetValue: initialViewType,

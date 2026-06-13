@@ -545,6 +545,7 @@ class SelectedButtonState extends State<SelectedButton> {
   /// or created automatically. It tracks and manages the button's interactive
   /// states and updates them based on user interactions and the selection value.
   late WidgetStatesController statesController;
+
   @override
   void initState() {
     super.initState();
@@ -675,6 +676,18 @@ class Button extends StatefulWidget {
   /// Often used for icons indicating direction (arrows) or additional actions.
   /// Automatically spaced from the [child] with appropriate gaps.
   final Widget? trailing;
+
+  /// Custom gap between [leading] and [child].
+  ///
+  /// When null, defaults to the scaled density gap. Set to override the
+  /// default spacing between the leading widget and the main content.
+  final double? leadingGap;
+
+  /// Custom gap between [child] and [trailing].
+  ///
+  /// When null, defaults to the scaled density gap. Set to override the
+  /// default spacing between the main content and the trailing widget.
+  final double? trailingGap;
 
   /// The primary content displayed in the button.
   ///
@@ -853,6 +866,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -906,6 +921,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -954,6 +971,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1003,6 +1022,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1052,6 +1073,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1100,6 +1123,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1148,6 +1173,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1197,6 +1224,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1245,6 +1274,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1298,6 +1329,8 @@ class Button extends StatefulWidget {
     this.statesController,
     this.leading,
     this.trailing,
+    this.leadingGap,
+    this.trailingGap,
     required this.child,
     this.onPressed,
     this.focusNode,
@@ -1349,8 +1382,13 @@ class Button extends StatefulWidget {
 /// - Applies style transitions and animations
 class ButtonState<T extends Button> extends State<T> {
   bool get _shouldEnableFeedback {
-    final platform = Theme.of(context).platform;
-    return isMobile(platform);
+    final theme = Theme.of(context);
+    // Use theme setting if provided, otherwise default to platform-specific behavior
+    if (theme.enableFeedback != null) {
+      return theme.enableFeedback!;
+    }
+    // Default: enable feedback on mobile platforms
+    return isMobile(theme.platform);
   }
 
   AbstractButtonStyle? _style;
@@ -1431,6 +1469,7 @@ class ButtonState<T extends Button> extends State<T> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scaling = theme.scaling;
+    final densityGap = theme.density.baseGap * scaling;
     bool enableFeedback = widget.enableFeedback ?? _shouldEnableFeedback;
     return Clickable(
       disableFocusOutline: widget.disableFocusOutline,
@@ -1475,12 +1514,7 @@ class ButtonState<T extends Button> extends State<T> {
       onSecondaryLongPress: widget.onSecondaryLongPress,
       onTertiaryLongPress: widget.onTertiaryLongPress,
       child: widget.leading == null && widget.trailing == null
-          ? Align(
-              heightFactor: 1,
-              widthFactor: 1,
-              alignment: widget.alignment ?? Alignment.center,
-              child: widget.child,
-            )
+          ? _buildAligned()
           : IntrinsicWidth(
               child: IntrinsicHeight(
                 child: Row(
@@ -1488,22 +1522,33 @@ class ButtonState<T extends Button> extends State<T> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (widget.leading != null) widget.leading!,
-                    if (widget.leading != null) Gap(8 * scaling),
+                    if (widget.leading != null)
+                      Gap(widget.leadingGap ?? densityGap),
                     Expanded(
-                      child: Align(
-                        widthFactor: 1,
-                        heightFactor: 1,
-                        alignment: widget.alignment ?? AlignmentDirectional.centerStart,
-                        child: widget.child,
-                      ),
+                      child: _buildAligned(),
                     ),
-                    if (widget.trailing != null) Gap(8 * scaling),
+                    if (widget.trailing != null)
+                      Gap(widget.trailingGap ?? densityGap),
                     if (widget.trailing != null) widget.trailing!,
                   ],
                 ),
               ),
             ),
     );
+  }
+
+  Widget _buildAligned() {
+    if (widget.alignment != null) {
+      return AnimatedAlign(
+        duration: kDefaultDuration,
+        curve: Curves.easeInOut,
+        widthFactor: 1,
+        heightFactor: 1,
+        alignment: widget.alignment!,
+        child: widget.child,
+      );
+    }
+    return widget.child;
   }
 }
 
@@ -3178,24 +3223,21 @@ extension ButtonStyleExtension on AbstractButtonStyle {
   /// - [hoverPadding]: Padding when hovered
   /// - [focusPadding]: Padding when focused
   /// - [disabledPadding]: Padding when disabled
-  ///
-  /// Note: The implementation currently doesn't change padding based on state
-  /// due to a limitation in the state resolution logic, but the API is provided
-  /// for consistency with other style properties.
   AbstractButtonStyle withPadding(
       {EdgeInsetsGeometry? padding,
       EdgeInsetsGeometry? hoverPadding,
       EdgeInsetsGeometry? focusPadding,
       EdgeInsetsGeometry? disabledPadding}) {
     return copyWith(
-      padding: (context, states, padding) {
+      padding: (context, states, defaultPadding) {
+        final fallbackPadding = padding ?? defaultPadding;
         return states.disabled
-            ? disabledPadding ?? padding
+            ? disabledPadding ?? fallbackPadding
             : states.hovered
-                ? hoverPadding ?? padding
+                ? hoverPadding ?? fallbackPadding
                 : states.focused
-                    ? focusPadding ?? padding
-                    : padding;
+                    ? focusPadding ?? fallbackPadding
+                    : fallbackPadding;
       },
     );
   }
@@ -3352,9 +3394,11 @@ MouseCursor _buttonMouseCursor(BuildContext context, Set<WidgetState> states) {
 
 EdgeInsets _buttonPadding(BuildContext context, Set<WidgetState> states) {
   final theme = Theme.of(context);
+  final baseContentPadding = theme.density.baseContentPadding * theme.scaling;
+  final baseGap = theme.density.baseGap * theme.scaling;
   return EdgeInsets.symmetric(
-    horizontal: theme.scaling * 16,
-    vertical: theme.scaling * 8,
+    horizontal: baseContentPadding,
+    vertical: baseGap,
   );
 }
 
@@ -3407,7 +3451,7 @@ Decoration _buttonCardDecoration(BuildContext context, Set<WidgetState> states) 
 
 EdgeInsets _buttonCardPadding(BuildContext context, Set<WidgetState> states) {
   final theme = Theme.of(context);
-  return const EdgeInsets.all(16) * theme.scaling;
+  return EdgeInsets.all(theme.density.baseContentPadding * theme.scaling);
 }
 
 // MENUBUTTON
@@ -3442,17 +3486,32 @@ TextStyle _buttonMenuTextStyle(BuildContext context, Set<WidgetState> states) {
 EdgeInsets _buttonMenuPadding(BuildContext context, Set<WidgetState> states) {
   final theme = Theme.of(context);
   final scaling = theme.scaling;
+  final baseContentPadding = theme.density.baseContentPadding * scaling;
+  final baseGap = theme.density.baseGap * scaling;
   final menuGroupData = Data.maybeOf<MenuGroupData>(context);
   if (menuGroupData != null && menuGroupData.direction == Axis.horizontal) {
-    return const EdgeInsets.symmetric(horizontal: 18, vertical: 6) * scaling;
+    return EdgeInsets.symmetric(
+      horizontal: baseContentPadding * 1.125,
+      vertical: baseGap * 0.75,
+    );
   }
-  return const EdgeInsets.only(left: 8, top: 6, right: 6, bottom: 6) * scaling;
+  return EdgeInsets.only(
+    left: baseGap,
+    top: baseGap * 0.75,
+    right: baseGap * 0.75,
+    bottom: baseGap * 0.75,
+  );
 }
 
 EdgeInsets _buttonMenubarPadding(BuildContext context, Set<WidgetState> states) {
   final theme = Theme.of(context);
   final scaling = theme.scaling;
-  return const EdgeInsets.symmetric(horizontal: 12, vertical: 4) * scaling;
+  final baseContentPadding = theme.density.baseContentPadding * scaling;
+  final baseGap = theme.density.baseGap * scaling;
+  return EdgeInsets.symmetric(
+    horizontal: baseContentPadding * 0.75,
+    vertical: baseGap * 0.5,
+  );
 }
 
 IconThemeData _buttonMenuIconTheme(BuildContext context, Set<WidgetState> states) {
@@ -3546,6 +3605,7 @@ Decoration _buttonOutlineDecoration(BuildContext context, Set<WidgetState> state
       border: Border.all(
         color: themeData.colorScheme.border,
         width: 1,
+        strokeAlign: BorderSide.strokeAlignCenter,
       ),
       borderRadius: BorderRadius.circular(themeData.radiusMd),
     );
@@ -3556,6 +3616,7 @@ Decoration _buttonOutlineDecoration(BuildContext context, Set<WidgetState> state
       border: Border.all(
         color: themeData.colorScheme.input,
         width: 1,
+        strokeAlign: BorderSide.strokeAlignCenter,
       ),
       borderRadius: BorderRadius.circular(themeData.radiusMd),
     );
@@ -3563,7 +3624,8 @@ Decoration _buttonOutlineDecoration(BuildContext context, Set<WidgetState> state
   return BoxDecoration(
     color: themeData.colorScheme.input.scaleAlpha(0.3),
     border: Border.all(
-      color: themeData.colorScheme.input,
+      color: themeData.colorScheme.border,
+      strokeAlign: BorderSide.strokeAlignCenter,
       width: 1,
     ),
     borderRadius: BorderRadius.circular(themeData.radiusMd),
