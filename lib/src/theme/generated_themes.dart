@@ -124,7 +124,7 @@ class ColorSchemes {
 
   static const ColorScheme darkNeutral = ColorScheme(
     brightness: Brightness.dark,
-    background: Color(0xFF191919),
+    background: Color(0xFF0A0A0A),
     foreground: Color(0xFFFAFAFA),
     card: Color(0xFF0A0A0A),
     cardForeground: Color(0xFFFAFAFA),
