@@ -63,6 +63,9 @@ class NavigationSidebar extends StatefulWidget {
   /// Optional fixed footer items displayed after the scrollable content.
   final List<Widget>? footer;
 
+  /// Controller for the sidebar's scrollable body.
+  final ScrollController? controller;
+
   /// Spacing between navigation items.
   ///
   /// Controls the vertical gap between adjacent navigation items.
@@ -169,6 +172,7 @@ class NavigationSidebar extends StatefulWidget {
     this.keepMainAxisSize = false,
     this.header,
     this.footer,
+    this.controller,
     required this.children,
   });
 
@@ -250,6 +254,7 @@ class _NavigationSidebarState extends State<NavigationSidebar> {
                       ),
                     Expanded(
                       child: CustomScrollView(
+                        controller: widget.controller,
                         clipBehavior: Clip.none,
                         shrinkWrap: true,
                         scrollDirection: direction,
