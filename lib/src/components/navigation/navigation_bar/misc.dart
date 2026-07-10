@@ -264,6 +264,11 @@ class NavigationGroup extends StatelessWidget {
   /// Whether the label is pinned when scrolling (sidebar only).
   final bool labelPinned;
 
+  /// Background color painted behind a sidebar label.
+  ///
+  /// When null, the theme background color is used.
+  final Color? labelBackgroundColor;
+
   /// Creates a new navigation group.
   const NavigationGroup({
     super.key,
@@ -275,6 +280,7 @@ class NavigationGroup extends StatelessWidget {
     this.labelOverflow = NavigationOverflow.clip,
     this.labelFloating = false,
     this.labelPinned = true,
+    this.labelBackgroundColor,
   });
 
   @override
@@ -325,6 +331,7 @@ class NavigationGroup extends StatelessWidget {
           delegate: _NavigationLabelDelegate(
             maxExtent: densityContainerPadding * 3 * value,
             minExtent: densityContainerPadding * 3 * value,
+            backgroundColor: labelBackgroundColor,
             child: Builder(builder: (context) {
               return GestureDetector(
                 behavior: HitTestBehavior.translucent,
@@ -478,6 +485,7 @@ class NavigationGroup extends StatelessWidget {
 
 class _NavigationLabelDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
+  final Color? backgroundColor;
   @override
   final double maxExtent;
   @override
@@ -486,6 +494,7 @@ class _NavigationLabelDelegate extends SliverPersistentHeaderDelegate {
   _NavigationLabelDelegate({
     required this.maxExtent,
     required this.minExtent,
+    this.backgroundColor,
     required this.child,
   });
 
@@ -499,7 +508,7 @@ class _NavigationLabelDelegate extends SliverPersistentHeaderDelegate {
     final data = Data.maybeOf<NavigationControlData>(context);
     final parentPadding = data?.parentPadding ?? EdgeInsets.zero;
     final direction = data?.direction ?? Axis.vertical;
-    final color = theme.colorScheme.background;
+    final color = backgroundColor ?? theme.colorScheme.background;
     return CustomPaint(
       painter: _NavigationLabelBackgroundPainter(
         color: color,
@@ -514,6 +523,7 @@ class _NavigationLabelDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant _NavigationLabelDelegate oldDelegate) {
     return oldDelegate.child != child ||
+        oldDelegate.backgroundColor != backgroundColor ||
         oldDelegate.maxExtent != maxExtent ||
         oldDelegate.minExtent != minExtent;
   }
