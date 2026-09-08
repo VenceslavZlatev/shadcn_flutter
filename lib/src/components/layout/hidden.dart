@@ -45,11 +45,8 @@ class HiddenTheme extends ComponentThemeData {
       duration: duration == null ? this.duration : duration(),
       curve: curve == null ? this.curve : curve(),
       reverse: reverse == null ? this.reverse : reverse(),
-      keepCrossAxisSize: keepCrossAxisSize == null
-          ? this.keepCrossAxisSize
-          : keepCrossAxisSize(),
-      keepMainAxisSize:
-          keepMainAxisSize == null ? this.keepMainAxisSize : keepMainAxisSize(),
+      keepCrossAxisSize: keepCrossAxisSize == null ? this.keepCrossAxisSize : keepCrossAxisSize(),
+      keepMainAxisSize: keepMainAxisSize == null ? this.keepMainAxisSize : keepMainAxisSize(),
     );
   }
 
@@ -284,8 +281,7 @@ class _HiddenLayout extends SingleChildRenderObjectWidget {
   }
 }
 
-class _RenderHiddenLayout extends RenderBox
-    with RenderObjectWithChildMixin<RenderBox> {
+class _RenderHiddenLayout extends RenderBox with RenderObjectWithChildMixin<RenderBox> {
   TextDirection textDirection;
   Axis direction;
   bool reverse;
@@ -343,8 +339,7 @@ class _RenderHiddenLayout extends RenderBox
       return 0;
     }
     double width = childWidth(child, height);
-    return ((keepMainAxisSize && direction != Axis.vertical) ||
-            (keepCrossAxisSize && direction != Axis.horizontal))
+    return ((keepMainAxisSize && direction != Axis.vertical) || (keepCrossAxisSize && direction != Axis.horizontal))
         ? width
         : width * progress;
   }
@@ -358,8 +353,7 @@ class _RenderHiddenLayout extends RenderBox
       return 0;
     }
     double height = childHeight(child, width);
-    return ((keepMainAxisSize && direction != Axis.horizontal) ||
-            (keepCrossAxisSize && direction != Axis.vertical))
+    return ((keepMainAxisSize && direction != Axis.horizontal) || (keepCrossAxisSize && direction != Axis.vertical))
         ? height
         : height * progress;
   }

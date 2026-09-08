@@ -1670,6 +1670,19 @@ class SelectPopup<T> extends StatefulWidget {
   /// Controller for the items scroll view.
   final ScrollController? scrollController;
 
+  /// Optional fixed logical extent for every virtualized item.
+  ///
+  /// This overrides [usePrototypeItem]. When null, virtualized lists measure
+  /// their first item once and use it as the extent for every row by default.
+  final double? itemExtent;
+
+  /// Whether the first item determines the extent of every virtualized row.
+  ///
+  /// This keeps large, consistently sized select menus fast without requiring
+  /// callers to repeat a hard-coded item height. Disable it for lists whose
+  /// items intentionally have different heights.
+  final bool usePrototypeItem;
+
   /// Whether the list should shrink-wrap its contents.
   final bool shrinkWrap;
 
@@ -1691,6 +1704,8 @@ class SelectPopup<T> extends StatefulWidget {
     this.enableSearch = true,
     this.errorBuilder,
     this.scrollController,
+    this.itemExtent,
+    this.usePrototypeItem = true,
   })  : items = null,
         shrinkWrap = false,
         disableVirtualization = false;
@@ -1709,6 +1724,8 @@ class SelectPopup<T> extends StatefulWidget {
     this.autoClose,
     this.canUnselect,
     this.scrollController,
+    this.itemExtent,
+    this.usePrototypeItem = true,
     this.shrinkWrap = true,
   })  : builder = null,
         enableSearch = false,
@@ -1728,9 +1745,11 @@ class SelectPopup<T> extends StatefulWidget {
     this.autoClose,
     this.canUnselect,
     this.scrollController,
+    this.itemExtent,
   })  : builder = null,
         enableSearch = false,
         disableVirtualization = true,
+        usePrototypeItem = false,
         shrinkWrap = false;
 
   /// A method used to implement SelectPopupBuilder
@@ -1816,6 +1835,9 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scaling = theme.scaling;
+    final fixedItemExtent = widget.itemExtent == null
+        ? null
+        : widget.itemExtent! * scaling;
     return SubFocusScope(builder: (context, subFocusScope) {
       return Actions(
         actions: {
@@ -2002,6 +2024,16 @@ class _SelectPopupState<T> extends State<SelectPopup<T>>
                                                                   4) *
                                                               scaling,
                                                       itemBuilder: data.build,
+                                                      itemExtent:
+                                                          fixedItemExtent,
+                                                      prototypeItem:
+                                                          fixedItemExtent ==
+                                                                      null &&
+                                                                  widget
+                                                                      .usePrototypeItem
+                                                              ? data.build(
+                                                                  context, 0)
+                                                              : null,
                                                       shrinkWrap:
                                                           widget.shrinkWrap,
                                                       itemCount: data
